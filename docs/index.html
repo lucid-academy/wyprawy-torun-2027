@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="hist">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Interaktywne wyprawy miejskie — Toruń</title>
+<meta name="description" content="Demo platformy interaktywnych wypraw miejskich. Toruń, sezon 2027.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   1. MOTYWY — wszystkie kolory żyją tutaj. Nowy motyw = nowy blok zmiennych,
+      zero duplikowania reguł niżej.
+   ========================================================================== */
+:root{
+  --sans:"Sora","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --ease:cubic-bezier(.2,.9,.3,1);
+  --t:240ms;
+  --app-w:430px;
+}
+
+/* ---------- CYBERPUNK (bazowy) ---------- */
+:root[data-theme="cyber"]{
+  --page:#04050c;
+  --bg:#070B1E; --bg-2:#0B1230;
+  --surface:#0E1638; --surface-2:#151F4A; --surface-3:#1B2760;
+  --line:#26315F; --line-strong:#3A4A94;
+  --text:#E7ECFF; --text-dim:#9AA8DC; --text-mute:#6B79B4;
+  --accent:#7B2FFF; --accent-2:#22D3EE;
+  --accent-soft:rgba(123,47,255,.14); --accent2-soft:rgba(34,211,238,.13);
+  --accent-ink:#FFFFFF;
+  --glow:0 0 22px rgba(123,47,255,.42);
+  --glow-2:0 0 20px rgba(34,211,238,.34);
+  --shadow-app:0 30px 90px rgba(0,0,0,.7), 0 0 0 1px rgba(123,47,255,.16);
+  --shadow-sheet:0 -20px 50px rgba(0,0,0,.62);
+  --scrim:rgba(2,3,10,.62);
+  --lock:#3A4372;
+  /* mapa: render nocny bez tintu — grading jest juz w pliku */
+  --mapa-tint:transparent; --mapa-tint-op:0;
+  --mgla-kolor:#04060F; --chmura-kolor:rgba(178,202,232,.85);
+  --mapa-etykieta:#EAF0FF; --mapa-akcent2:#22D3EE;
+  /* motyw: podziałka HUD — gęste kreski cyan, co piąta dłuższa w fiolecie */
+  --motif:
+    linear-gradient(90deg, var(--accent-2) 0 1px, transparent 1px) 0 0 / 9px 5px repeat-x,
+    linear-gradient(90deg, var(--accent) 0 2px, transparent 2px) 0 0 / 45px 10px repeat-x,
+    linear-gradient(180deg, var(--accent-soft), transparent);
+  --motif-h:10px; --motif-op:.9;
+}
+/* ---------- FANTASY ---------- */
+:root[data-theme="fantasy"]{
+  --page:#04100a;
+  --bg:#08170F; --bg-2:#0D2317;
+  --surface:#102A1B; --surface-2:#163823; --surface-3:#1D4A2E;
+  --line:#245038; --line-strong:#3A7355;
+  --text:#F2EEDF; --text-dim:#A9C6B2; --text-mute:#7A9C86;
+  --accent:#E0B558; --accent-2:#5FCBA0;
+  --accent-soft:rgba(224,181,88,.14); --accent2-soft:rgba(95,203,160,.13);
+  --accent-ink:#0A1C11;
+  --glow:0 0 22px rgba(224,181,88,.36);
+  --glow-2:0 0 20px rgba(95,203,160,.30);
+  --shadow-app:0 30px 90px rgba(0,0,0,.7), 0 0 0 1px rgba(224,181,88,.16);
+  --shadow-sheet:0 -20px 50px rgba(0,0,0,.6);
+  --scrim:rgba(2,10,6,.6);
+  --lock:#3C5C48;
+  /* mapa: lekki tint butelkowej zieleni */
+  --mapa-tint:#2E6B4A; --mapa-tint-op:.16;
+  --mgla-kolor:#04120B; --chmura-kolor:rgba(198,226,204,.82);
+  --mapa-etykieta:#F3E2B4; --mapa-akcent2:#5FCBA0;
+  /* motyw: złota krata rombów, jak tłoczenie na oprawie */
+  --motif:
+    repeating-linear-gradient(45deg, var(--accent) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(-45deg, var(--accent) 0 1px, transparent 1px 11px),
+    linear-gradient(180deg, var(--accent-soft), transparent);
+  --motif-h:15px; --motif-op:.55;
+}
+/* ---------- HISTORYCZNY ---------- */
+:root,:root[data-theme="hist"]{
+  --page:#3B2116;
+  --bg:#E9D3B8; --bg-2:#F4E4CE;
+  --surface:#F3E3CC; --surface-2:#E2CAAB; --surface-3:#D2B390;
+  --line:#C7A47C; --line-strong:#A67B52;
+  --text:#2E1A11; --text-dim:#6E482F; --text-mute:#916A4A;
+  --accent:#BB4A28; --accent-2:#28466A;
+  --accent-soft:rgba(187,74,40,.13); --accent2-soft:rgba(40,70,106,.10);
+  --accent-ink:#FDF3E4;
+  --glow:0 2px 12px rgba(187,74,40,.26);
+  --glow-2:0 2px 12px rgba(40,70,106,.20);
+  --shadow-app:0 30px 90px rgba(0,0,0,.5), 0 0 0 1px rgba(187,74,40,.24);
+  --shadow-sheet:0 -18px 44px rgba(62,38,24,.32);
+  --scrim:rgba(80,50,30,.42);
+  --lock:#B99B76;
+  /* mapa: lekki tint ceglany */
+  --mapa-tint:#B0603A; --mapa-tint-op:.17;
+  --mgla-kolor:#120A06; --chmura-kolor:rgba(228,208,180,.85);
+  --mapa-etykieta:#F8E6D2; --mapa-akcent2:#E7BE86;
+  /* motyw: kawalek ceglanego muru - dwa rzedy w mijanke, spoiny jasniejsze od cegly */
+  --mortar:rgba(247,235,215,.92);
+  --motif:
+    linear-gradient(90deg, var(--mortar) 0 2.5px, transparent 2.5px) 0 0 / 36px 10px repeat-x,
+    linear-gradient(90deg, var(--mortar) 0 2.5px, transparent 2.5px) 18px 10px / 36px 10px repeat-x,
+    linear-gradient(var(--mortar), var(--mortar)) 0 9px / 100% 1.6px repeat-x,
+    linear-gradient(var(--mortar), var(--mortar)) 0 19px / 100% 1.6px repeat-x,
+    linear-gradient(180deg, #BC6640, #A2502E);
+  --motif-h:20px; --motif-op:.9;
+}
+
+/* ==========================================================================
+   2. SZKIELET
+   ========================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--page);color:var(--text);
+  font-family:var(--sans);font-size:15px;line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;min-height:100dvh;
+  transition:background var(--t) var(--ease);
+}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px;border-radius:4px}
+::-webkit-scrollbar{width:0;height:0}
+
+.app{
+  position:relative;width:100%;max-width:var(--app-w);
+  height:100vh;height:100dvh;
+  background:var(--bg);overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:background var(--t) var(--ease);
+}
+@media (min-width:520px) and (min-height:640px){
+  body{padding:26px 0}
+  .app{
+    height:min(910px,calc(100dvh - 52px));
+    border-radius:28px;border:1px solid var(--line);
+    box-shadow:var(--shadow-app);
+  }
+}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;
+  transition:opacity 340ms var(--ease),transform 340ms var(--ease)}
+.screen[hidden]{display:none}
+.screen.is-out{opacity:0;transform:scale(1.05);pointer-events:none}
+.screen.is-in{opacity:0;transform:scale(.965)}
+
+/* ==========================================================================
+   3. EKRAN 1 — INTRO
+   ========================================================================== */
+.screen-intro{background:var(--bg);justify-content:space-between}
+.intro-top{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:18px 18px 0;z-index:3;
+}
+.brand{
+  font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--text-mute);
+}
+.skip{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-dim);
+  padding:8px 13px;border:1px solid var(--line);border-radius:999px;
+  background:var(--surface);
+  background:color-mix(in srgb,var(--surface) 70%,transparent);
+  transition:color var(--t) var(--ease),border-color var(--t) var(--ease),box-shadow var(--t) var(--ease);
+}
+.skip:hover{color:var(--text);border-color:var(--accent-2);box-shadow:var(--glow-2)}
+.skip svg{width:13px;height:13px;flex:0 0 auto}
+
+.intro-stage{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 16px 8px;gap:22px;position:relative;overflow:hidden;
+}
+.intro-stage::before{
+  content:"";position:absolute;left:50%;top:46%;translate:-50% -50%;
+  width:150%;aspect-ratio:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,var(--accent-soft) 0%,transparent 62%);
+}
+.stage-title{position:relative;text-align:center;max-width:330px}
+.stage-title h1{
+  margin:0 0 8px;font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.15;
+}
+.stage-title p{
+  margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--text-mute);
+}
+
+.video-wrap{
+  position:relative;width:100%;aspect-ratio:16/9;
+  background:#000;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:0 18px 44px rgba(0,0,0,.55);
+}
+.video-wrap video,.video-wrap img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+}
+.video-wrap img[hidden]{display:none}
+
+.play-btn{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,rgba(4,6,16,.15),rgba(4,6,16,.5));
+  transition:opacity var(--t) var(--ease);
+}
+.play-btn[hidden]{display:none}
+/* przycisk play leży zawsze na ciemnym kadrze — tło ma stały ciemny ton,
+   a kolor bierze z akcentu motywu */
+.play-ring{
+  width:66px;height:66px;border-radius:50%;
+  display:grid;place-items:center;
+  background:rgba(6,9,20,.58);
+  border:1.6px solid var(--accent);
+  box-shadow:0 0 22px color-mix(in srgb,var(--accent) 52%,transparent);
+  transition:transform var(--t) var(--ease),box-shadow var(--t) var(--ease);
+}
+.play-btn:hover .play-ring{transform:scale(1.08);
+  box-shadow:0 0 36px color-mix(in srgb,var(--accent) 70%,transparent)}
+.play-ring svg{width:24px;height:24px;margin-left:3px;fill:var(--accent)}
+
+/* kartka — hotspot dokładnie na dokumencie z ostatniej klatki */
+.doc{
+  position:absolute;
+  left:25%;top:5%;width:44.6%;height:87%;
+  border:1.5px solid var(--accent-2);border-radius:5px;
+  rotate:-1deg;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:9%;
+  animation:docpulse 2.4s var(--ease) infinite;
+  transition:transform 200ms var(--ease);
+}
+.doc[hidden]{display:none}
+.doc:hover{transform:scale(1.025)}
+.doc-label{
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--accent-ink);
+  background:var(--accent);padding:6px 14px;border-radius:999px;
+  box-shadow:var(--glow);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.doc-label svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
+@keyframes docpulse{
+  0%,100%{box-shadow:0 0 0 600px rgba(2,3,10,.38),0 0 14px 1px var(--accent)}
+  50%    {box-shadow:0 0 0 600px rgba(2,3,10,.38),0 0 30px 7px var(--accent)}
+}
+
+.intro-hint{
+  margin:0;text-align:center;font-family:var(--mono);
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-mute);
+  min-height:17px;position:relative;
+  transition:opacity var(--t) var(--ease);
+}
+
+/* ==========================================================================
+   4. PORTAL — nagłówek, panele, tab bar
+   ========================================================================== */
+.screen-portal{background:var(--bg)}
+.hdr{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-bottom:1px solid var(--line);
+  background:var(--bg);z-index:5;flex:0 0 auto;
+}
+.icon-btn{
+  width:34px;height:34px;flex:0 0 auto;border-radius:10px;
+  display:grid;place-items:center;border:1px solid var(--line);
+  color:var(--text-dim);
+  transition:color var(--t) var(--ease),border-color var(--t) var(--ease),
+             background var(--t) var(--ease),box-shadow var(--t) var(--ease);
+}
+.icon-btn:hover{color:var(--text);border-color:var(--accent-2);background:var(--accent2-soft);box-shadow:var(--glow-2)}
+.icon-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.hdr-title{flex:1;min-width:0}
+.hdr-title b{display:block;font-size:14px;font-weight:600;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-title span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--text-mute);margin-top:1px}
+.chip-demo{
+  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.18em;
+  padding:5px 9px;border-radius:6px;color:var(--accent);
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+}
+
+.panels{flex:1;position:relative;overflow:hidden}
+.panel{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch}
+.panel[hidden]{display:none}
+
+.tabbar{
+  flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);
+  border-top:1px solid var(--line);background:var(--bg);
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5;
+}
+.tab{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:8px 4px 7px;border-radius:12px;color:var(--text-mute);
+  transition:color var(--t) var(--ease),background var(--t) var(--ease);
+}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round;
+  transition:filter var(--t) var(--ease)}
+.tab span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
+.tab:hover{color:var(--text-dim)}
+.tab[aria-selected="true"]{color:var(--accent);background:var(--accent-soft)}
+.tab[aria-selected="true"] svg{filter:drop-shadow(0 0 7px color-mix(in srgb,var(--accent) 60%,transparent))}
+
+/* ==========================================================================
+   5. ZAKŁADKA 1 — MAPA
+   Statyczny render nocny + nakładki. Zero biblioteki mapowej, zero kafelków
+   w runtime, mapa nieruchoma. Grading, światła i mgła nad Wisłą są wypalone
+   w pliku — dlatego żaden filtr nie dotyka całego obrazka.
+   Kolejność warstw: podkład → tint → winieta → mgła → chmury → trasy → markery
+   ========================================================================== */
+.panel-map{padding:0}
+.mapa{
+  position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;
+  background:#080a10;border-bottom:1px solid var(--line);
+  isolation:isolate;
+}
+.mapa > .w{position:absolute;inset:0;pointer-events:none}
+
+/* --- podkład --- */
+.mapa-tlo{width:100%;height:100%;object-fit:cover;display:block}
+
+/* --- tint motywu: tylko fantasy i historyczny, cyberpunk zostawia render czysty --- */
+.mapa-tint{background:var(--mapa-tint);mix-blend-mode:soft-light;opacity:var(--mapa-tint-op)}
+
+/* --- winieta --- */
+.mapa-winieta{background:radial-gradient(120% 92% at 50% 46%,
+  transparent 52%, rgba(3,5,12,.18) 80%, rgba(2,3,8,.44) 100%)}
+
+/* --- mgła wojny --- */
+.mapa-mgla{width:100%;height:100%}
+
+/* --- chmury --- */
+.chmura{
+  position:absolute;
+  background:radial-gradient(closest-side, var(--chmura-kolor), transparent 74%);
+  border-radius:58% 42% 63% 37% / 47% 58% 42% 53%;
+  mix-blend-mode:screen;
+  animation:dryf var(--czas) ease-in-out infinite alternate;
+}
+.chmura.b{border-radius:44% 56% 38% 62% / 60% 44% 56% 40%}
+.chmura.c{border-radius:63% 37% 52% 48% / 38% 62% 38% 62%}
+@keyframes dryf{
+  0%   {transform:translate3d(0,0,0) scale(1);          opacity:var(--op-min)}
+  45%  {transform:translate3d(3.5%,-1.4%,0) scale(1.09);opacity:var(--op-max)}
+  100% {transform:translate3d(7%,.9%,0) scale(1.02);    opacity:var(--op-min)}
+}
+
+/* --- trasy --- */
+.mapa-trasy{width:100%;height:100%;overflow:visible}
+.trasa{
+  fill:none;stroke:var(--mapa-akcent2);stroke-width:2;stroke-linecap:round;
+  vector-effect:non-scaling-stroke;   /* 2 px na ekranie, nie 2 jednostki viewBox */
+  stroke-dasharray:6 9;filter:url(#glow-a);
+  animation:plyn 11s linear infinite;
+}
+.trasa.b{stroke:var(--accent);filter:url(#glow-b);animation-duration:14s;animation-direction:reverse}
+@keyframes plyn{to{stroke-dashoffset:-150}}
+#glow-a feDropShadow{flood-color:var(--mapa-akcent2)}
+#glow-b feDropShadow{flood-color:var(--accent)}
+#glow-pkt feDropShadow{flood-color:var(--accent)}
+
+/* --- markery --- */
+.mapa-punkty{position:absolute;inset:0}
+.pkt{
+  position:absolute;translate:-50% -50%;
+  display:flex;flex-direction:column;align-items:center;
+  background:none;border:none;padding:0;cursor:pointer;
+}
+.pkt-svg{width:64px;height:64px;display:block;overflow:visible}
+.pk-rdzen{fill:var(--accent);filter:url(#glow-pkt)}
+.pk-oczko{fill:var(--mapa-etykieta);opacity:.9}
+.pk-ring{fill:none;stroke:var(--mapa-akcent2);stroke-width:1.5;
+  transform-box:fill-box;transform-origin:center;
+  animation:pulsuj 3s cubic-bezier(.25,0,.35,1) infinite}
+.pk-ring.b{animation-delay:1.5s}
+@keyframes pulsuj{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+.pkt-nazwa{
+  margin-top:-8px;font-family:var(--mono);font-size:8.5px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--mapa-etykieta);
+  white-space:nowrap;
+  text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.85);
+}
+.pkt .pkt-svg{transition:transform .22s var(--ease)}
+.pkt:hover .pkt-svg,.pkt.is-active .pkt-svg{transform:scale(1.12)}
+
+/* --- podpis pod mapą --- */
+.mapa-podpis{
+  margin:0;padding:8px 18px 0;font-family:var(--mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);opacity:.5;
+}
+
+/* --- lista wypraw pod mapą --- */
+.lista-wypraw{display:flex;flex-direction:column;gap:8px;padding:14px 18px 26px}
+.wyprawa{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:var(--surface);
+  transition:border-color var(--t) var(--ease),background var(--t) var(--ease),
+             transform var(--t) var(--ease);
+}
+.wyprawa:hover{border-color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
+.wyprawa-n{
+  flex:0 0 auto;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 36%,transparent);
+}
+.wyprawa-t{flex:1;min-width:0}
+.wyprawa-t b{display:block;font-size:13.5px;font-weight:600;letter-spacing:-.01em}
+.wyprawa-t span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--text-mute);margin-top:2px}
+.wyprawa svg{width:15px;height:15px;flex:0 0 auto;stroke:var(--text-mute);fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* --- tryb kalibracji (?cal=1) --- */
+.kal{
+  position:absolute;left:10px;top:10px;z-index:9;
+  font-family:var(--mono);font-size:11px;color:#fff;
+  background:rgba(8,10,18,.9);border:1px solid var(--accent);border-radius:8px;
+  padding:7px 10px;pointer-events:none;white-space:pre-line;line-height:1.5;
+}
+.kal[hidden]{display:none}
+.mapa.kalibracja{cursor:crosshair}
+.mapa.kalibracja .pkt{pointer-events:none}   /* w kalibracji klik ma trafiać w mapę, nie w marker */
+/* ==========================================================================
+   5c. PEŁNA POSTAĆ
+   ========================================================================== */
+.postac{
+  position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,6,11,.95);   /* podgląd zdjęcia — ciemne tło w każdym motywie */
+  opacity:0;transition:opacity 280ms var(--ease);
+}
+.postac.is-open{opacity:1}
+.postac[hidden]{display:none}
+.postac-tlo{position:absolute;inset:0;background:none;border:none;cursor:pointer}
+.postac img{
+  position:relative;max-width:100%;max-height:100%;object-fit:contain;display:block;
+  transform:scale(.96);transition:transform 320ms var(--ease);
+}
+.postac.is-open img{transform:scale(1)}
+.postac-stopka{
+  position:absolute;left:0;right:0;bottom:0;padding:20px 20px 22px;pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(4,5,12,.86) 62%);
+  display:flex;flex-direction:column;gap:2px;
+}
+.postac-stopka b{font-size:19px;font-weight:600;letter-spacing:-.01em;color:#fff}
+.postac-stopka span{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--accent-2)}
+.postac-x{
+  position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:11px;
+  display:grid;place-items:center;color:#fff;background:rgba(8,10,18,.6);
+  border:1px solid rgba(255,255,255,.18);
+}
+.postac-x:hover{background:rgba(8,10,18,.85)}
+.postac-x svg{width:16px;height:16px}
+
+/* ==========================================================================
+   6. BOTTOM SHEET
+   ========================================================================== */
+.sheet-backdrop{
+  position:absolute;inset:0;background:var(--scrim);z-index:20;
+  opacity:0;transition:opacity 260ms var(--ease);
+}
+.sheet-backdrop.is-open{opacity:1}
+.sheet-backdrop[hidden]{display:none}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:21;
+  max-height:86%;display:flex;flex-direction:column;
+  background:var(--surface);border-top:1px solid var(--line);
+  border-radius:22px 22px 0 0;box-shadow:var(--shadow-sheet);overflow:hidden;
+  transform:translateY(100%);transition:transform 320ms var(--ease);
+}
+.sheet.is-open{transform:translateY(0)}
+.sheet[hidden]{display:none}
+.sheet-grab{padding:10px 0 2px;display:flex;justify-content:center;flex:0 0 auto}
+.sheet-grab i{display:block;width:38px;height:4px;border-radius:2px;background:var(--line-strong);opacity:.7}
+.sheet-close{
+  position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:9px;
+  display:grid;place-items:center;color:var(--text-mute);
+  transition:color var(--t) var(--ease),background var(--t) var(--ease);
+}
+.sheet-close:hover{color:var(--text);background:var(--surface-2)}
+.sheet-close svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.sheet-body{padding:6px 20px 26px;overflow-y:auto;overscroll-behavior:contain}
+
+.sheet-kicker{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 6px;
+}
+.sheet-title{margin:0 0 9px;font-size:21px;font-weight:600;letter-spacing:-.015em;line-height:1.2}
+.genre{
+  display:inline-block;margin:0 0 13px;padding:5px 11px;border-radius:999px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent-2);background:var(--accent2-soft);
+  border:1px solid var(--line-strong);
+  border:1px solid color-mix(in srgb,var(--accent-2) 38%,transparent);
+}
+.sheet-desc{margin:0 0 16px;font-size:14px;line-height:1.62;color:var(--text-dim)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.meta-item{
+  flex:1 1 auto;min-width:96px;
+  border:1px solid var(--line);border-radius:11px;padding:9px 11px;background:var(--surface-2);
+}
+.meta-item dt{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-mute);margin-bottom:3px;
+}
+.meta-item dd{margin:0;font-size:12.5px;font-weight:500;line-height:1.3}
+.badge-gps{
+  display:flex;align-items:flex-start;gap:9px;
+  border:1px dashed color-mix(in srgb,var(--accent-2) 46%,transparent);
+  background:var(--accent2-soft);border-radius:11px;padding:10px 12px;
+  font-size:11.5px;line-height:1.45;color:var(--text-dim);
+}
+.badge-gps svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;
+  stroke:var(--accent-2);fill:none;stroke-width:1.9}
+.badge-gps b{color:var(--text);font-weight:600}
+.sheet-video{
+  position:relative;width:100%;aspect-ratio:16/9;margin:0 0 16px;
+  background:#000;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+}
+.sheet-video video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.sheet-video-cap{
+  margin:-8px 0 16px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--text-mute);
+}
+/* okładka wyprawy — kadr pionowy przycięty do pasa „key artu” */
+.sheet-cover{
+  position:relative;width:100%;aspect-ratio:5/4;margin:0 0 16px;
+  border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2);
+}
+.sheet-cover img{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  object-fit:cover;object-position:center 36%;
+}
+
+/* ==========================================================================
+   7. ZAKŁADKA 2 — PROFIL
+   ========================================================================== */
+.pad{padding:20px 18px 32px}
+.sec-label{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--text-mute);margin:0 0 10px;
+}
+
+/* ---- pasek dekoracyjny: jedyny element, który każdy motyw rysuje po swojemu.
+       Cyberpunk = podziałka HUD, fantasy = krata rombów, historyczny = mur z cegły. ---- */
+.motif{
+  position:absolute;left:0;right:0;top:0;height:var(--motif-h);
+  background:var(--motif);opacity:var(--motif-op);
+  pointer-events:none;z-index:1;
+  transition:opacity var(--t) var(--ease);
+}
+.motif::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:rgba(0,0,0,.2)}
+.motif.slim{height:9px}
+
+.pcard{
+  border:1px solid var(--line);border-radius:18px;
+  padding:calc(15px + var(--motif-h)) 16px 16px;
+  background:linear-gradient(150deg,var(--surface-2),var(--surface));
+  position:relative;overflow:hidden;
+  transition:background var(--t) var(--ease),border-color var(--t) var(--ease);
+}
+.pcard::after{
+  content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-soft),transparent 68%);pointer-events:none;
+}
+.pcard-top{display:flex;align-items:center;gap:14px;margin-bottom:15px;position:relative}
+/* awatar jest przyciskiem — otwiera pełną sylwetkę */
+.awatar{position:relative;flex:0 0 auto;padding:0;border:none;background:none;
+  cursor:pointer;border-radius:50%;line-height:0;
+  transition:transform var(--t) var(--ease)}
+.awatar:hover{transform:scale(1.04)}
+.awatar-lupa{
+  position:absolute;right:0;bottom:0;width:21px;height:21px;border-radius:50%;
+  display:grid;place-items:center;color:var(--accent-ink);background:var(--accent);
+  border:1.5px solid var(--surface);box-shadow:var(--glow);
+}
+.awatar-lupa svg{width:10px;height:10px}
+.avatar{width:64px;height:64px;flex:0 0 auto}
+img.avatar{border-radius:50%;object-fit:cover;border:1.6px solid var(--accent);background:var(--surface-3)}
+.ach-ico img{width:100%;height:100%;object-fit:contain;border-radius:7px}
+.av-ring{fill:none;stroke:var(--accent);stroke-width:1.6;opacity:.85}
+.av-bg{fill:var(--surface-3)}
+.av-fig{fill:var(--accent);opacity:.92}
+.av-hat{fill:none;stroke:var(--accent-2);stroke-width:3.4;stroke-linecap:round}
+.av-crown{fill:var(--accent-2)}
+.pcard-who{flex:1;min-width:0}
+.pcard-who b{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.pcard-who span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--accent-2);margin-top:3px}
+.lvl{
+  flex:0 0 auto;text-align:center;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);
+  background:var(--accent-soft);border-radius:12px;padding:7px 11px;
+}
+.lvl i{display:block;font-family:var(--mono);font-size:8px;font-style:normal;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-mute)}
+.lvl b{display:block;font-size:21px;font-weight:700;line-height:1.1;color:var(--accent)}
+.xp-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text-mute)}
+.xp-head b{color:var(--text);font-weight:500}
+.xp-bar{height:7px;border-radius:4px;background:var(--surface-3);overflow:hidden;position:relative}
+.xp-bar i{display:block;height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  box-shadow:var(--glow);width:0;transition:width 900ms var(--ease)}
+
+/* przełącznik stylu */
+.styles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.style-btn{
+  border:1px solid var(--line);border-radius:12px;padding:11px 6px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  background:var(--surface);color:var(--text-mute);
+  transition:border-color var(--t) var(--ease),color var(--t) var(--ease),
+             background var(--t) var(--ease),box-shadow var(--t) var(--ease);
+}
+.style-btn:hover{border-color:var(--line-strong);color:var(--text-dim)}
+.style-btn span{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase}
+.sw{display:flex;gap:3px}
+.sw i{width:11px;height:11px;border-radius:50%;display:block;border:1px solid rgba(128,128,128,.28)}
+.style-btn[aria-pressed="true"]{
+  border-color:var(--accent);color:var(--text);background:var(--accent-soft);box-shadow:var(--glow);
+}
+
+/* achievementy */
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.ach{
+  border:1px solid var(--line);border-radius:13px;padding:10px 4px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:var(--surface);text-align:center;
+  transition:border-color var(--t) var(--ease),background var(--t) var(--ease),
+             transform var(--t) var(--ease);
+}
+.ach:hover{transform:translateY(-2px);border-color:var(--line-strong)}
+.ach-ico{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;position:relative}
+.ach-ico svg{width:19px;height:19px;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ach-name{font-family:var(--mono);font-size:8px;letter-spacing:.06em;line-height:1.3;
+  text-transform:uppercase;color:var(--text-dim);hyphens:auto}
+.ach.on .ach-ico:not(.img){background:var(--accent-soft);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.ach.on .ach-ico svg{stroke:var(--accent)}
+.ach.on .ach-name{color:var(--text)}
+.ach.on{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 14%,transparent)}
+.ach.off{opacity:.72}
+.ach.off .ach-ico:not(.img){background:var(--surface-2);border:1px solid var(--line)}
+.ach.off .ach-ico svg{stroke:var(--lock)}
+.ach.off .ach-name{color:var(--text-mute)}
+.ach-lock{position:absolute;right:-4px;bottom:-4px;width:17px;height:17px;border-radius:50%;
+  background:var(--surface-3);display:grid;place-items:center;border:1px solid var(--line-strong)}
+.ach-lock svg{width:9px;height:9px;stroke:var(--text-dim);stroke-width:2.4}
+
+/* ikona jako grafika — rysunek stoi sam, bez kafelka pod spodem */
+.ach-ico.img{width:52px;height:52px}
+.ach-ico.img img{width:100%;height:100%;object-fit:contain;border-radius:0;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.28))}
+.ach.off .ach-ico.img img{filter:grayscale(1) brightness(.94) opacity(.45)}
+.ach[aria-pressed="true"]{border-color:var(--accent-2);background:var(--accent2-soft)}
+
+.ach-detail{
+  margin-top:11px;border:1px solid var(--line);border-left:2px solid var(--accent-2);
+  border-radius:12px;padding:12px 14px;background:var(--surface);
+  transition:background var(--t) var(--ease);
+}
+.ach-detail b{display:block;font-size:14px;font-weight:600;margin-bottom:3px}
+.ach-detail p{margin:0 0 7px;font-size:12.5px;line-height:1.5;color:var(--text-dim)}
+.ach-status{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+.ach-status.on{color:var(--accent-2)}
+.ach-status.off{color:var(--text-mute)}
+
+/* ==========================================================================
+   8. ZAKŁADKA 3 — O PROJEKCIE
+   ========================================================================== */
+.pitch{
+  margin:0 0 6px;font-size:22px;line-height:1.32;font-weight:500;letter-spacing:-.02em;
+}
+.pitch em{font-style:normal;color:var(--accent-2)}
+.pitch-sub{margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-mute)}
+.rule{height:1px;background:var(--line);margin:24px 0;border:0}
+
+h2.sec{margin:0 0 4px;font-size:17px;font-weight:600;letter-spacing:-.01em}
+p.sec-intro{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--text-dim)}
+
+/* odsłony */
+.odslony{display:flex;flex-direction:column;gap:9px}
+.odslona{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  border:1px solid var(--line);border-radius:14px;padding:12px 13px;background:var(--surface);
+  transition:border-color var(--t) var(--ease),background var(--t) var(--ease),
+             transform var(--t) var(--ease);
+}
+.odslona:hover{border-color:var(--accent);background:var(--accent-soft);transform:translateX(2px)}
+.odslona.static{cursor:default}
+.odslona.static:hover{border-color:var(--line);background:var(--surface);transform:none}
+.od-n{
+  flex:0 0 auto;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+}
+.od-txt{flex:1;min-width:0}
+.od-txt b{display:block;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.od-txt span{display:block;font-size:12px;line-height:1.45;color:var(--text-dim);margin-top:2px}
+.od-when{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:2px;display:block}
+.od-go{flex:0 0 auto;color:var(--text-mute)}
+.od-go svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+
+/* dashboard */
+.dash{
+  border:1px solid var(--line-strong);border-radius:18px;overflow:hidden;background:var(--surface);
+  position:relative;
+  transition:background var(--t) var(--ease),border-color var(--t) var(--ease);
+}
+.dash-bar{
+  display:flex;align-items:center;gap:8px;padding:11px 14px;
+  border-bottom:1px solid var(--line);background:var(--surface-2);
+}
+.dash-dots{display:flex;gap:5px}
+.dash-dots i{width:8px;height:8px;border-radius:50%;background:var(--line-strong);display:block}
+.dash-dots i:first-child{background:var(--accent)}
+.dash-bar b{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-dim);font-weight:500}
+.dash-body{padding:14px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--surface-2)}
+.tile i{display:block;font-family:var(--mono);font-size:8.5px;font-style:normal;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--text-mute);margin-bottom:4px}
+.tile b{display:block;font-size:23px;font-weight:700;line-height:1.05;letter-spacing:-.02em}
+.tile b small{font-size:12px;font-weight:500;color:var(--text-dim);margin-left:2px}
+.tile.a b{color:var(--accent)}
+.tile.b b{color:var(--accent-2)}
+
+.chart-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface-2);
+  margin-bottom:9px}
+.chart-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:9px}
+.chart-head i{font-family:var(--mono);font-size:8.5px;font-style:normal;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--text-mute)}
+.chart-head b{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--accent-2);
+  text-align:right}
+.chart{display:block;width:100%;height:auto;overflow:visible}
+.bar-r{fill:var(--accent);opacity:.42;transition:opacity 180ms var(--ease),fill 180ms var(--ease);
+  cursor:pointer}
+.bar-r:hover,.bar-r.is-on{opacity:1}
+.bar-x{font-family:var(--mono);font-size:7px;fill:var(--text-mute);text-anchor:middle}
+/* paleta segmentów: wyprowadzona z akcentów motywu, nie zapisana na sztywno.
+   Pierwsza deklaracja to wartość zapasowa dla przeglądarek bez color-mix(). */
+.k0{--c:var(--accent)}
+.k1{--c:var(--accent-2)}
+.k2{--c:var(--accent-2)}
+.k2{--c:color-mix(in srgb,var(--accent) 50%,var(--accent-2))}
+.k3{--c:var(--accent)}
+.k3{--c:color-mix(in srgb,var(--accent) 78%,var(--accent-2))}
+.k4{--c:var(--accent-2)}
+.k4{--c:color-mix(in srgb,var(--accent) 24%,var(--accent-2))}
+.don-seg{fill:none;stroke:var(--c);stroke-width:13;transition:stroke-width 180ms var(--ease)}
+.don-mid{font-family:var(--mono);font-weight:700;font-size:13px;fill:var(--text);
+  text-anchor:middle;dominant-baseline:central}
+.don-mid-s{font-family:var(--mono);font-size:6.5px;letter-spacing:.14em;fill:var(--text-mute);
+  text-anchor:middle;dominant-baseline:central}
+.legend{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.legend div{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;
+  color:var(--text-dim);white-space:nowrap}
+.legend i{width:8px;height:8px;border-radius:2px;flex:0 0 auto;background:var(--c)}
+.legend b{margin-left:auto;color:var(--text);font-weight:500}
+.donut-wrap{display:flex;align-items:center;gap:14px}
+
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.rank li{display:flex;align-items:center;gap:9px}
+.rank-n{font-family:var(--mono);font-size:9px;color:var(--text-mute);width:14px;flex:0 0 auto}
+.rank-b{flex:1;min-width:0}
+.rank-b span{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);
+  font-size:9.5px;color:var(--text-dim);margin-bottom:3px}
+.rank-b span b{color:var(--text);font-weight:500}
+.rank-t{height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+.rank-t i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;
+  transition:width 800ms var(--ease)}
+
+.dash-foot{
+  padding:10px 14px;border-top:1px solid var(--line);background:var(--surface-2);
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-mute);display:flex;align-items:center;gap:7px;
+}
+.dash-foot svg{width:12px;height:12px;stroke:var(--text-mute);fill:none;stroke-width:1.8}
+
+/* kto co robi */
+.roles{display:flex;flex-direction:column;gap:9px}
+.role{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:var(--surface)}
+.role.us{border-color:color-mix(in srgb,var(--accent) 40%,transparent);background:var(--accent-soft)}
+.role-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.role-h svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round}
+.role-h b{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;
+  font-weight:700}
+.role ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.role li{position:relative;padding-left:15px;font-size:12.5px;line-height:1.5;color:var(--text-dim)}
+.role li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;
+  background:var(--accent-2)}
+.note{
+  display:flex;gap:10px;align-items:flex-start;margin-top:9px;
+  border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:var(--surface-2);
+}
+.note svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;stroke:var(--accent-2);fill:none;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.note p{margin:0;font-size:12.5px;line-height:1.55;color:var(--text-dim)}
+.note b{color:var(--text);font-weight:600}
+
+.always{
+  border:1px solid var(--line-strong);
+  border:1px solid color-mix(in srgb,var(--accent-2) 40%,transparent);
+  background:var(--accent2-soft);border-radius:16px;
+  padding:calc(15px + var(--motif-h)) 16px 16px;
+  position:relative;overflow:hidden;
+}
+.always b{display:block;font-size:15px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
+.always p{margin:0;font-size:13px;line-height:1.6;color:var(--text-dim)}
+
+.foot{
+  margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-mute);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important}
+  .m-mk-halo{opacity:.24}
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ================= EKRAN 1: INTRO ================= -->
+  <section class="screen screen-intro" id="scr-intro">
+    <div class="intro-top">
+      <span class="brand" id="brand-intro">Lucid Academy</span>
+      <button class="skip" id="btn-skip">
+        Pomiń intro
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8zM19 5v14"/></svg>
+      </button>
+    </div>
+
+    <div class="intro-stage">
+      <div class="stage-title">
+        <h1 id="intro-title">Interaktywne wyprawy miejskie</h1>
+        <p id="intro-sub">Toruń · demo platformy</p>
+      </div>
+
+      <div class="video-wrap" id="intro-wrap">
+        <video id="intro-video" preload="none" playsinline
+               poster="assets/poster.jpg" src="assets/intro.mp4"></video>
+        <img id="intro-endframe" src="assets/intro-end.jpg" alt="" hidden>
+        <button class="play-btn" id="btn-play" aria-label="Odtwórz intro">
+          <span class="play-ring"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span>
+        </button>
+        <button class="doc" id="btn-doc" hidden aria-label="Otwórz akta sprawy">
+          <span class="doc-label">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h13M13 6l6 6-6 6"/></svg>
+            Otwórz
+          </span>
+        </button>
+      </div>
+
+      <p class="intro-hint" id="intro-hint">Dotknij, żeby odtworzyć</p>
+    </div>
+  </section>
+
+  <!-- ================= PORTAL ================= -->
+  <section class="screen screen-portal" id="scr-portal" hidden>
+
+    <header class="hdr">
+      <button class="icon-btn" id="btn-replay" aria-label="Wróć do intro" title="Wróć do intro">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4M3 3v6h6"/></svg>
+      </button>
+      <div class="hdr-title">
+        <b id="hdr-name">Interaktywne wyprawy miejskie</b>
+        <span id="hdr-sub">Toruń · sezon 2027</span>
+      </div>
+      <span class="chip-demo">DEMO</span>
+    </header>
+
+    <div class="panels">
+
+      <!-- ---------- MAPA ---------- -->
+      <div class="panel panel-map" id="pan-mapa" role="tabpanel" aria-labelledby="tab-mapa">
+
+        <div class="mapa" id="mapa">
+          <img class="mapa-tlo" id="mapa-tlo" alt="" src="assets/mapa-torun.jpg">
+          <div class="w mapa-tint"></div>
+          <div class="w mapa-winieta"></div>
+
+          <!-- mgła wojny: maska ma biały prostokąt (mgła widoczna) i czarne,
+               rozmyte koła w miejscach punktów — czarny w masce = otwór -->
+          <svg class="w mapa-mgla" viewBox="0 0 150 100" preserveAspectRatio="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <filter id="mgla-rozmycie"><feGaussianBlur stdDeviation="7"/></filter>
+              <mask id="mgla-maska" maskUnits="userSpaceOnUse" x="0" y="0" width="150" height="100">
+                <rect width="150" height="100" fill="#fff"/>
+                <g id="mgla-otwory" filter="url(#mgla-rozmycie)"></g>
+              </mask>
+            </defs>
+            <rect id="mgla-plaszcz" width="150" height="100" mask="url(#mgla-maska)"/>
+          </svg>
+
+          <div class="w mapa-chmury" id="mapa-chmury"></div>
+
+          <svg class="w mapa-trasy" viewBox="0 0 150 100" preserveAspectRatio="none"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <filter id="glow-a" x="-60%" y="-60%" width="220%" height="220%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3.2" flood-opacity="1"/>
+                <feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-opacity=".95"/>
+              </filter>
+              <filter id="glow-b" x="-60%" y="-60%" width="220%" height="220%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3.2" flood-opacity="1"/>
+                <feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-opacity=".95"/>
+              </filter>
+              <filter id="glow-pkt" x="-140%" y="-140%" width="380%" height="380%">
+                <feDropShadow dx="0" dy="0" stdDeviation="3" flood-opacity="1"/>
+                <feDropShadow dx="0" dy="0" stdDeviation="7" flood-opacity=".65"/>
+              </filter>
+            </defs>
+            <g id="trasy"></g>
+          </svg>
+
+          <div class="mapa-punkty" id="mapa-punkty"></div>
+          <div class="kal" id="kal" hidden></div>
+        </div>
+
+        <p class="mapa-podpis">mapa poglądowa</p>
+        <div class="lista-wypraw" id="lista-wypraw"></div>
+      </div>
+
+      <!-- ---------- PROFIL ---------- -->
+      <div class="panel" id="pan-profil" role="tabpanel" aria-labelledby="tab-profil" hidden>
+        <div class="pad">
+          <p class="sec-label">Styl karty i portalu</p>
+          <div class="styles" id="styles" role="group" aria-label="Wybór stylu"></div>
+          <div class="note" style="margin-top:9px">
+            <svg viewBox="0 0 24 24"><path d="M12 3l7 4v6c0 4.4-3 7.6-7 8.6C8 20.6 5 17.4 5 13V7z"/>
+              <path d="M9.5 12.2l1.8 1.8 3.6-3.8"/></svg>
+            <p><b>Jeden silnik, wiele narracji.</b> Zmiana stylu przestawia cały portal — mapę,
+              panele i nawigację. Ta sama platforma obsługuje wyprawę historyczną, badawczą
+              i post-apokaliptyczną.</p>
+          </div>
+
+          <hr class="rule">
+
+          <p class="sec-label">Karta postaci</p>
+          <div class="pcard">
+            <span class="motif" aria-hidden="true"></span>
+            <div class="pcard-top">
+             <button class="awatar" id="awatar" type="button" aria-label="Pokaż całą postać">
+              <svg class="avatar" viewBox="0 0 80 80" aria-hidden="true">
+                <defs><clipPath id="av-clip"><circle cx="40" cy="40" r="33"/></clipPath></defs>
+                <circle class="av-ring" cx="40" cy="40" r="36.5"/>
+                <circle class="av-bg" cx="40" cy="40" r="33"/>
+                <g clip-path="url(#av-clip)">
+                  <path class="av-fig" d="M13 78c0-14 12-22 27-22s27 8 27 22z"/>
+                  <circle class="av-fig" cx="40" cy="43" r="11.5"/>
+                  <path class="av-crown" d="M29.5 33c0-8.5 4.7-13 10.5-13s10.5 4.5 10.5 13z"/>
+                  <path class="av-hat" d="M19 33h42"/>
+                </g>
+              </svg>
+              <span class="awatar-lupa" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg>
+              </span>
+             </button>
+              <div class="pcard-who">
+                <b id="p-nick">Ola Jankowska</b>
+                <span id="p-rank">Tropicielka</span>
+              </div>
+              <div class="lvl"><i>poziom</i><b id="p-lvl">4</b></div>
+            </div>
+            <div class="xp-head">
+              <span>Doświadczenie</span>
+              <span><b id="p-xp">1 840</b> / <span id="p-xpmax">2 500</span> XP</span>
+            </div>
+            <div class="xp-bar"><i id="p-xpbar"></i></div>
+          </div>
+
+          <hr class="rule">
+
+          <p class="sec-label">Osiągnięcia <span id="ach-count" style="color:var(--accent-2)"></span></p>
+          <div class="ach-grid" id="ach-grid"></div>
+          <div class="ach-detail" id="ach-detail" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- ---------- O PROJEKCIE ---------- -->
+      <div class="panel" id="pan-projekt" role="tabpanel" aria-labelledby="tab-projekt" hidden>
+        <div class="pad">
+
+          <p class="pitch">Ta sama ulica, którą mijają codziennie, nagle <em>ma drugie dno</em>.
+            Mieszkaniec wraca do domu z historią, której nie znajdzie w żadnym przewodniku —
+            i z osiągnięciem, które zostaje na koncie na kolejne sezony.</p>
+          <p class="pitch-sub" id="pitch-sub">Toruń · sezon 2027</p>
+
+          <hr class="rule">
+
+          <h2 class="sec">Co dostajecie w 2027</h2>
+          <p class="sec-intro">Trzy odsłony i konkurs dla mieszkańców, ogłoszony i rozstrzygnięty
+            w tym samym roku. Każda odsłona to inny gatunek i osobna historia — przejść je można
+            w dowolnej kolejności, a każda zaczyna się i kończy w Kulturalnym hubie.</p>
+          <div class="odslony" id="odslony"></div>
+
+          <hr class="rule">
+
+          <h2 class="sec">Panel organizatora</h2>
+          <p class="sec-intro">Nie zbieracie danych na kartkach. Platforma liczy sama, a zestawienia
+            są gotowe do sprawozdania w każdej chwili.</p>
+          <div class="dash">
+            <span class="motif slim" aria-hidden="true"></span>
+            <div class="dash-bar">
+              <span class="dash-dots"><i></i><i></i><i></i></span>
+              <b>panel organizatora · sezon 2027</b>
+            </div>
+            <div class="dash-body">
+              <div class="tiles" id="tiles"></div>
+
+              <div class="chart-box">
+                <div class="chart-head">
+                  <i>Ukończenia wg godziny startu</i>
+                  <b id="hour-read">szczyt 18:00</b>
+                </div>
+                <svg class="chart" id="chart-hours" viewBox="0 0 340 116" role="img"
+                     aria-label="Wykres słupkowy rozkładu godzinowego"></svg>
+              </div>
+
+              <div class="chart-box">
+                <div class="chart-head"><i>Ukończenia wg odsłony</i></div>
+                <div class="donut-wrap">
+                  <svg id="chart-ring" viewBox="0 0 100 100" style="width:100px;height:100px;flex:0 0 auto"
+                       role="img" aria-label="Wykres kołowy udziału odsłon w ukończeniach"></svg>
+                  <div class="legend" id="ring-legend"></div>
+                </div>
+              </div>
+
+              <div class="chart-box" style="margin-bottom:0">
+                <div class="chart-head"><i>Ranking punktów</i><b>top 5</b></div>
+                <ul class="rank" id="rank"></ul>
+              </div>
+            </div>
+            <div class="dash-foot">
+              <svg viewBox="0 0 24 24" stroke-linecap="round"><circle cx="12" cy="12" r="9"/>
+                <path d="M12 11v5M12 7.6v.9"/></svg>
+              Widok dla organizatora — dane przykładowe
+            </div>
+          </div>
+
+          <hr class="rule">
+
+          <h2 class="sec">Kto co robi</h2>
+          <p class="sec-intro">Podział jest prosty i nie obciąża Waszego zespołu.</p>
+          <div class="roles" id="roles"></div>
+          <div class="note">
+            <svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/>
+              <circle cx="12" cy="10" r="2.4"/></svg>
+            <p><b>Wsparcie na miejscu w pierwszych dniach każdej odsłony.</b></p>
+          </div>
+
+          <hr class="rule">
+
+          <div class="always">
+            <span class="motif" aria-hidden="true"></span>
+            <b>Wyprawy działają przez cały rok, nie tylko w dniu wydarzenia</b>
+            <p>Wyprawa nie znika po weekendzie otwarcia. Zostaje otwarta do końca sezonu i wraca
+              w kolejnym — mieszkaniec przechodzi ją w dowolną sobotę, a katalog rośnie z roku na rok.
+              Frekwencja kumuluje się zamiast zerować.</p>
+          </div>
+
+          <div class="foot">
+            <span id="foot-left">Lucid Academy</span>
+            <span id="foot-right">Demo · sezon 2027</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="tabbar" role="tablist" aria-label="Nawigacja">
+      <button class="tab" id="tab-mapa" role="tab" aria-selected="true" aria-controls="pan-mapa" data-tab="mapa">
+        <svg viewBox="0 0 24 24"><path d="M9 4L3 6.2V20l6-2.2 6 2.2 6-2.2V4l-6 2.2z"/><path d="M9 4v13.8M15 6.2V20"/></svg>
+        <span>Mapa</span>
+      </button>
+      <button class="tab" id="tab-profil" role="tab" aria-selected="false" aria-controls="pan-profil" data-tab="profil">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>
+        <span>Profil</span>
+      </button>
+      <button class="tab" id="tab-projekt" role="tab" aria-selected="false" aria-controls="pan-projekt" data-tab="projekt">
+        <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12.5h6M9 16.5h4"/></svg>
+        <span>O projekcie</span>
+      </button>
+    </nav>
+  </section>
+
+  <!-- ================= PEŁNA POSTAĆ ================= -->
+  <div class="postac" id="postac" hidden>
+    <button class="postac-tlo" id="postac-tlo" aria-label="Zamknij"></button>
+    <img id="postac-img" alt="Pełna sylwetka postaci">
+    <div class="postac-stopka">
+      <b id="postac-nick">—</b><span id="postac-ranga">—</span>
+    </div>
+    <button class="postac-x" id="postac-x" aria-label="Zamknij">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <!-- ================= BOTTOM SHEET ================= -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <span class="motif slim" aria-hidden="true"></span>
+    <div class="sheet-grab"><i></i></div>
+    <button class="sheet-close" id="sheet-close" aria-label="Zamknij">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   CONFIG — wszystko do podmiany jest tutaj i tylko tutaj.
+   ========================================================================== */
+var CONFIG = {
+
+  NAZWA_PROJEKTU: "Interaktywne wyprawy miejskie",  // tytuł — jedno miejsce do zmiany
+  PODTYTUL:       "Toruń · sezon 2027",
+  MIASTO:         "Toruń",
+
+  // Decyzja: demo jest neutralne i nie nazywa instytucji — zostawiamy null.
+  // Wpisanie nazwy podmienia „po Waszej stronie” na „po stronie <nazwa>”
+  // w podziale ról i dopisuje adresata w stopce zakładki „O projekcie”.
+  ODBIORCA:  null,
+  ODBIORCA_SKROT: null,
+  WYKONAWCA: "Lucid Academy",
+
+  WIDEO: {
+    intro:        "assets/intro.mp4",
+    introPoster:  "assets/poster.jpg",
+    introKoniec:  "assets/intro-end.jpg",   // ostatnia klatka — podkładana po pominięciu
+    hub:          "assets/hub.mp4",
+    hubPoster:    "assets/hub-poster.jpg"
+  },
+
+  // hotspot „kartki” na ostatniej klatce intro, w % kadru
+  KARTKA: { left:25, top:5, width:44.6, height:87, rotate:-1 },
+
+  /* ---------------------------------------------------------------------
+     MAPA — statyczny render + nakładki. Pozycje punktów w PROCENTACH
+     kontenera (nie obrazka), bo podkład jest wpasowany przez object-fit:cover.
+     Kalibracja: dopisz ?cal=1 do adresu, kliknij w mapę — dostaniesz gotową
+     linijkę do wklejenia tutaj i od razu w schowku.
+     --------------------------------------------------------------------- */
+  MAPA: {
+    podklad: "assets/mapa-torun.jpg",
+
+    punkty: {
+      hub:   { top:"41%",   left:"33.5%" },
+      park:  { top:"55%",   left:"19%"   },
+      dybow: { top:"80.3%", left:"59.1%" }
+    },
+
+    // otwory w mgle wojny: promień w % szerokości mapy, wspólny dla wszystkich
+    mgla: { promien: 22, rozmycie: 8, krycie: 0.30 },
+
+    // chmury nad lewą częścią parku, poza strefą markera — każda osobno
+    chmury: [
+      { left:"3%",  top:"44%", w:"30%", h:"20%", kryMin:.20, kryMax:.36, rozmycie:20, czas:"46s" },
+      { left:"1%",  top:"57%", w:"22%", h:"15%", kryMin:.16, kryMax:.30, rozmycie:16, czas:"61s" },
+      { left:"11%", top:"62%", w:"18%", h:"12%", kryMin:.14, kryMax:.26, rozmycie:14, czas:"73s" }
+    ],
+
+    // wybrzuszenie krzywych łączących punkty (ułamek długości odcinka)
+    lukTrasy: 0.16
+  },
+
+  // Trzy odsłony, trzy różne gatunki. Wyprawy są niezależne — kolejność dowolna.
+  PUNKTY: [
+    {
+      id:"hub", nr:1, nazwa:"Kulturalny hub / Bydgoskie Przedmieście",
+      krotka:"Kulturalny hub",
+      gatunek:"Wiele warstw miasta", kicker:"Odsłona I · wiosna",
+      opis:"Wille Bydgoskiego Przedmieścia to najmłodsza warstwa tej opowieści. Pod nimi "+
+           "leżą jeszcze trzy inne miasta i wszystkie mają coś do dodania. Po drodze "+
+           "zaczepiają cię ludzie, którzy nigdy nie mogli się spotkać: zakonnik, medyk "+
+           "w masce, kobieta w sukni z czasów, gdy były tu jeszcze ogrody, i pracownik "+
+           "cegielni, z której wypalono cegły na te ściany. Każde z nich pamięta ten sam "+
+           "adres inaczej i każde ma powód, żeby coś przemilczeć.",
+      czas:"60–75 min", poziom:"Średni", dystans:"ok. 2,5 km",
+      wideo:"hub", wideoPodpis:"Postacie z pierwszej odsłony — materiał z produkcji"
+    },
+    {
+      id:"park", nr:2, nazwa:"Park na Bydgoskim",
+      gatunek:"Wyprawa badawcza", kicker:"Odsłona II · lato",
+      opis:"W parku wyrosło coś, czego nie ma w żadnym atlasie. Grzyby, które świecą dobę "+
+           "po deszczu, i pnącze, które w tydzień przeszło pół alei. Ktoś to tu przyniósł "+
+           "albo coś się obudziło — na razie nie wiadomo, która wersja jest gorsza. Idziesz "+
+           "z ekipą, która ma to opisać, zanim zrobi to prasa: liczysz okazy, pobierasz "+
+           "próbki, sprawdzasz, dokąd sięga. Na końcu trasy odpowiadasz na jedno pytanie "+
+           "i od tej odpowiedzi zależy, czy park zostaje otwarty.",
+      czas:"50–65 min", poziom:"Średni", dystans:"ok. 2 km",
+      okladka:"assets/okladka-park.jpg"
+    },
+    {
+      id:"dybow", nr:3, nazwa:"Zamek Dybowski",
+      gatunek:"Post-apokalipsa", kicker:"Odsłona III · jesień",
+      opis:"Sygnał wraca co kilkanaście minut i za każdym razem urywa się w tym samym "+
+           "miejscu. Na lewym brzegu nie ma już prądu ani mostu, którym dałoby się szybko "+
+           "wrócić, a z zamku zostały mury i to, co ludzie zdążyli w nich zostawić. "+
+           "Przeszukujesz je po kolei, licząc, ile wody i baterii da się jeszcze unieść, "+
+           "i idziesz w stronę nadajnika. Ktoś tam jest. Pytanie brzmi, od jak dawna.",
+      czas:"75–90 min", poziom:"Trudny", dystans:"ok. 3 km",
+      // wyżej niż domyślne 36%, żeby w kadrze został czerwony sygnał na maszcie
+      okladka:"assets/okladka-dybow.jpg", okladkaPoz:"center 27%"
+    }
+  ],
+
+  BADGE_GPS: "W wersji produkcyjnej: weryfikacja GPS na punkcie — postęp zalicza się dopiero, "+
+             "gdy gracz naprawdę tam jest.",
+
+  // awatar: okrągła ikonka na karcie (null -> rysowany inline SVG)
+  // postac: pełna sylwetka pokazywana po kliknięciu awatara
+  PROFIL: { nick:"Ola Jankowska", ranga:"Tropicielka", poziom:4, xp:1840, xpMax:2500,
+            awatar:"assets/awatar.png", postac:"assets/postac.jpg" },
+
+  // obraz: ścieżka do grafiki albo null -> ikona rysowana inline SVG (pole `ikona`).
+  // data: null oznacza osiągnięcie niezdobyte — kafelek wyszarza się i dostaje kłódkę.
+  ACHIEVEMENTY: [
+    { nazwa:"Debiut",        ikona:"flag",  obraz:"assets/ach-debiut.png",
+      warunek:"Ukończ swoją pierwszą wyprawę.", data:"12.04.2027" },
+    { nazwa:"Nocna zmiana",  ikona:"moon",  obraz:"assets/ach-noc.png",
+      warunek:"Ukończ wyprawę po zmroku.", data:"12.04.2027" },
+    { nazwa:"Tajemniczy hub",ikona:"key",   obraz:"assets/ach-hub.png",
+      warunek:"Odkryj wszystkie zakończenia historii w Kulturalnym hubie.", data:"26.04.2027" },
+    { nazwa:"Znak wodny",    ikona:"wave",  obraz:"assets/ach-wisla.png",
+      warunek:"Przejdź wyprawy po obu stronach Wisły.", data:"08.06.2027" },
+    { nazwa:"Własna trasa",  ikona:"quill", obraz:"assets/ach-trasa.png",
+      warunek:"Zgłoś własny pomysł na wyprawę do konkursu.", data:"21.07.2027" },
+    { nazwa:"Sezon 2027",    ikona:"three", obraz:"assets/ach-sezon.png",
+      warunek:"Ukończ trzy wyprawy w jednym sezonie.", data:null },
+    { nazwa:"Dwa zamki",     ikona:"towers",obraz:"assets/ach-zamki.png",
+      warunek:"Ukończ wyprawy po Zamku Dybowskim i Krzyżackim.", data:null },
+    { nazwa:"Zielnik",       ikona:"book",  obraz:"assets/ach-zielnik.png",
+      warunek:"Opisz wszystkie nieznane okazy w parku.", data:null }
+  ],
+
+  // Pierwszy na liście jest motywem bazowym — tym, który widać po wejściu.
+  STYLE: [
+    { id:"hist",    nazwa:"Historyczny", kolory:["#BB4A28","#28466A","#E9D3B8"] },
+    { id:"cyber",   nazwa:"Cyberpunk",   kolory:["#7B2FFF","#22D3EE","#070B1E"] },
+    { id:"fantasy", nazwa:"Fantasy",     kolory:["#E0B558","#5FCBA0","#08170F"] }
+  ],
+
+  // punkt -> otwiera lokalizację na mapie; cel:"dash" -> przewija do panelu organizatora;
+  // brak obu -> pozycja informacyjna, bez interakcji
+  ODSLONY: [
+    { rzym:"I",  kiedy:"Wiosna",   tytul:"Kulturalny hub / Bydgoskie Przedmieście",
+      opis:"Cztery warstwy miasta pod jednym adresem i świadkowie, którzy nie mogli się spotkać.",
+      punkt:"hub" },
+    { rzym:"II", kiedy:"Lato",     tytul:"Park na Bydgoskim",
+      opis:"Gatunki, których nie ma w atlasie, i pytanie, czy park zostaje otwarty.",
+      punkt:"park" },
+    { rzym:"III",kiedy:"Jesień",   tytul:"Zamek Dybowski",
+      opis:"Świat po katastrofie, resztki zasobów i sygnał, który wraca co kilkanaście minut.",
+      punkt:"dybow" },
+    { rzym:"K",  kiedy:"Cały rok", tytul:"Konkurs dla mieszkańców",
+      opis:"Mieszkańcy zgłaszają własne pomysły na wyprawę. Zwycięski opracowujemy w 2027 "+
+           "do gotowego projektu trasy — w 2028 wchodzicie z grą, którą wymyślili sami "+
+           "mieszkańcy." },
+    { rzym:"R",  kiedy:"Koniec roku", tytul:"Raport ewaluacyjny",
+      opis:"Frekwencja, ukończenia i najczęściej odwiedzane miejsca — zestawienie gotowe "+
+           "do sprawozdania.", cel:"dash" }
+  ],
+
+  DASHBOARD: {
+    kafelki: [
+      { etykieta:"Uczestnicy",        wartosc:"2 847", akcent:"a" },
+      { etykieta:"Ukończone wyprawy", wartosc:"1 962", akcent:"b" },
+      { etykieta:"Średni czas",       wartosc:"68",  jednostka:"min" },
+      { etykieta:"Ukończalność",      wartosc:"69",  jednostka:"%" }
+    ],
+    godziny: [["10",58],["11",112],["12",196],["13",241],["14",208],["15",157],
+              ["16",131],["17",172],["18",268],["19",224],["20",95]],
+    // Platforma nie zbiera danych o wieku — panel pokazuje rozkład po odsłonach.
+    odslony: [["Kulturalny hub",42],["Park na Bydgoskim",33],["Zamek Dybowski",25]],
+    pierscienPodpis:"odsłony",
+    ranking: [["Ola Jankowska",2140],["Marcin W.",1985],["Hanna Zawadzka",1870],
+              ["Ekipa z Podgórza",1640],["Tomek i Zuzia",1505]]
+  },
+
+  ROLE: {
+    wy: ["Marketing i promocja odsłon", "Kanały miejskie i plakaty",
+         "Komunikacja do mieszkańców"],
+    my: ["Platforma, hosting i konta uczestników", "Scenariusze, trasy, zagadki i treści",
+         "Raport ewaluacyjny na koniec roku"]
+  }
+};
+
+/* ==========================================================================
+   IKONY
+   ========================================================================== */
+var ICONS = {
+  flag:  '<path d="M6 3v18M6 4.5h12l-3 4 3 4H6"/>',
+  moon:  '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+  key:   '<circle cx="12" cy="9" r="3.4"/><path d="M9.6 13.4 8 20h8l-1.6-6.6"/>',
+  wave:  '<path d="M3 8.5c3-3 6 3 9 0s6-3 9 0M3 15c3-3 6 3 9 0s6-3 9 0"/>',
+  quill: '<path d="M4 20l3.2-1L20 6.2 17.8 4 5 16.8z"/><path d="M14.5 7.5 16.5 9.5"/>',
+  three: '<circle cx="12" cy="6" r="2.6"/><circle cx="6" cy="17" r="2.6"/><circle cx="18" cy="17" r="2.6"/>',
+  towers:'<path d="M4 20V9l3-2 3 2v11M14 20V7l3-2 3 2v13M2 20h20"/>',
+  book:  '<path d="M3 5.2c3-1 6-1 9 1 3-2 6-2 9-1v13c-3-1-6-1-9 1-3-2-6-2-9-1z"/><path d="M12 6.2v13"/>',
+  lock:  '<path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="9" rx="1.6"/>',
+  chev:  '<path d="M9 5l7 7-7 7"/>',
+  mega:  '<path d="M3 10v4h4l6 4V6l-6 4z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
+  build: '<path d="M4 21V8l7-4 7 4v13"/><path d="M9.5 21v-5h5v5M4 21h16"/>'
+};
+function svg(name, extra){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '+
+         'stroke-linecap="round" stroke-linejoin="round"'+(extra||'')+'>'+ICONS[name]+'</svg>';
+}
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, html){
+  var n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+}
+function nb(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " "); }
+
+/* ==========================================================================
+   STAN
+   ========================================================================== */
+var state = { ekran:"intro", zakladka:"mapa", styl:"hist", punkt:null, ach:0 };
+var LS_KEY = "gry2027.styl";
+
+/* ==========================================================================
+   1. TEKSTY Z CONFIGU
+   ========================================================================== */
+function nazwijOdbiorce(){
+  return CONFIG.ODBIORCA_SKROT || CONFIG.ODBIORCA;
+}
+function aplikujConfig(){
+  document.title = CONFIG.NAZWA_PROJEKTU + " — " + CONFIG.MIASTO;
+  $("intro-title").textContent = CONFIG.NAZWA_PROJEKTU;
+  $("intro-sub").textContent   = CONFIG.MIASTO + " · demo platformy";
+  $("hdr-name").textContent    = CONFIG.NAZWA_PROJEKTU;
+  $("hdr-sub").textContent     = CONFIG.PODTYTUL;
+  $("pitch-sub").textContent   = CONFIG.PODTYTUL;
+  $("brand-intro").textContent = CONFIG.WYKONAWCA;
+  $("foot-left").textContent   = CONFIG.WYKONAWCA;
+  $("foot-right").textContent  = CONFIG.ODBIORCA
+    ? "Demo dla: " + CONFIG.ODBIORCA
+    : "Demo · sezon 2027";
+
+  var v = $("intro-video");
+  v.src = CONFIG.WIDEO.intro;
+  v.poster = CONFIG.WIDEO.introPoster;
+  $("intro-endframe").src = CONFIG.WIDEO.introKoniec;
+
+  var k = CONFIG.KARTKA, d = $("btn-doc");
+  d.style.left = k.left + "%";  d.style.top = k.top + "%";
+  d.style.width = k.width + "%"; d.style.height = k.height + "%";
+  d.style.rotate = k.rotate + "deg";
+}
+
+/* ==========================================================================
+   2. EKRAN 1 — INTRO
+   ========================================================================== */
+var vid = $("intro-video"), btnPlay = $("btn-play"), btnDoc = $("btn-doc"),
+    endFrame = $("intro-endframe"), hint = $("intro-hint"), btnSkip = $("btn-skip");
+
+function pokazKartke(){
+  try { vid.pause(); } catch(e){}
+  endFrame.hidden = false;
+  btnPlay.hidden = true;
+  btnDoc.hidden = false;
+  btnSkip.style.visibility = "hidden";
+  hint.textContent = "Akta sprawy 1904 — otwórz teczkę";
+  btnDoc.focus({ preventScroll:true });
+  var app = $("app"); app.scrollLeft = 0; app.scrollTop = 0;
+}
+function resetIntro(){
+  endFrame.hidden = true;
+  btnDoc.hidden = true;
+  btnPlay.hidden = false;
+  btnSkip.style.visibility = "visible";
+  hint.textContent = "Dotknij, żeby odtworzyć";
+  try { vid.pause(); vid.currentTime = 0; } catch(e){}
+}
+btnPlay.addEventListener("click", function(){
+  btnPlay.hidden = true;
+  hint.textContent = "Sprawa 1904";
+  var p = vid.play();
+  if (p && p.catch) p.catch(function(){ btnPlay.hidden = false; hint.textContent = "Dotknij, żeby odtworzyć"; });
+});
+vid.addEventListener("ended", pokazKartke);
+btnSkip.addEventListener("click", pokazKartke);
+btnDoc.addEventListener("click", function(){ przejdz("portal"); });
+
+/* ==========================================================================
+   3. PRZEJŚCIA MIĘDZY EKRANAMI
+   ========================================================================== */
+var scrIntro = $("scr-intro"), scrPortal = $("scr-portal");
+function przejdz(cel){
+  var z = cel === "portal" ? scrIntro : scrPortal;
+  var n = cel === "portal" ? scrPortal : scrIntro;
+  state.ekran = cel;
+  z.classList.add("is-out");
+  n.hidden = false;
+  n.classList.add("is-in");
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){ n.classList.remove("is-in"); });
+  });
+  setTimeout(function(){
+    z.hidden = true;
+    z.classList.remove("is-out");
+    if (cel === "intro") resetIntro();
+    else zamknijSheet();
+  }, 340);
+}
+$("btn-replay").addEventListener("click", function(){ przejdz("intro"); });
+
+/* ==========================================================================
+   4. ZAKŁADKI
+   ========================================================================== */
+var TABS = ["mapa","profil","projekt"];
+function ustawZakladke(id){
+  state.zakladka = id;
+  TABS.forEach(function(t){
+    var btn = $("tab-"+t), pan = $("pan-"+t);
+    var on = t === id;
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+    pan.hidden = !on;
+  });
+}
+TABS.forEach(function(t){
+  $("tab-"+t).addEventListener("click", function(){ ustawZakladke(t); });
+});
+
+/* ==========================================================================
+   5. MAPA + BOTTOM SHEET
+   ========================================================================== */
+var sheet = $("sheet"), backdrop = $("sheet-backdrop"), sheetBody = $("sheet-body");
+var sheetTimer = null;
+
+function punktPo(id){
+  for (var i=0;i<CONFIG.PUNKTY.length;i++) if (CONFIG.PUNKTY[i].id === id) return CONFIG.PUNKTY[i];
+  return null;
+}
+function otworzSheet(id){
+  var p = punktPo(id);
+  if (!p) return;
+  state.punkt = id;
+  clearTimeout(sheetTimer);
+
+  var html = "";
+  html += '<p class="sheet-kicker">'+p.kicker+'</p>';
+  html += '<h3 class="sheet-title" id="sheet-title">'+p.nazwa+'</h3>';
+  if (p.gatunek) html += '<p class="genre">'+p.gatunek+'</p>';
+  if (p.wideo){
+    html += '<div class="sheet-video"><video id="sheet-vid" controls preload="none" playsinline '+
+            'poster="'+CONFIG.WIDEO.hubPoster+'" src="'+CONFIG.WIDEO[p.wideo]+'"></video></div>';
+    if (p.wideoPodpis) html += '<p class="sheet-video-cap">'+p.wideoPodpis+'</p>';
+  } else if (p.okladka){
+    html += '<div class="sheet-cover"><img src="'+p.okladka+'" alt=""'+
+            (p.okladkaPoz ? ' style="object-position:'+p.okladkaPoz+'"' : '')+'></div>';
+  }
+  html += '<p class="sheet-desc">'+p.opis+'</p>';
+  html += '<dl class="meta">'+
+          '<div class="meta-item"><dt>Czas przejścia</dt><dd>'+p.czas+'</dd></div>'+
+          '<div class="meta-item"><dt>Poziom</dt><dd>'+p.poziom+'</dd></div>'+
+          '<div class="meta-item"><dt>Długość trasy</dt><dd>'+p.dystans+'</dd></div>'+
+          '</dl>';
+  html += '<div class="badge-gps">'+
+          '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">'+
+          '<path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>'+
+          '<span>'+CONFIG.BADGE_GPS+'</span></div>';
+  sheetBody.innerHTML = html;
+  sheetBody.scrollTop = 0;
+
+  document.querySelectorAll(".pkt").forEach(function(m){
+    m.classList.toggle("is-active", m.getAttribute("data-point") === id);
+  });
+
+  backdrop.hidden = false; sheet.hidden = false;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      backdrop.classList.add("is-open");
+      sheet.classList.add("is-open");
+    });
+  });
+}
+function zamknijSheet(){
+  if (sheet.hidden) return;
+  var v = $("sheet-vid");
+  if (v) { try { v.pause(); } catch(e){} }
+  sheet.classList.remove("is-open");
+  backdrop.classList.remove("is-open");
+  state.punkt = null;
+  document.querySelectorAll(".pkt").forEach(function(m){ m.classList.remove("is-active"); });
+  sheetTimer = setTimeout(function(){
+    sheet.hidden = true; backdrop.hidden = true; sheetBody.innerHTML = "";
+  }, 330);
+}
+$("sheet-close").addEventListener("click", zamknijSheet);
+backdrop.addEventListener("click", zamknijSheet);
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape"){ zamknijPostac(); zamknijSheet(); }
+});
+
+/* ==========================================================================
+   5b. MAPA — warstwy budowane z configu
+   Podkład jest statycznym renderem: nic go nie filtruje, nic nie pobiera
+   kafelków, mapa się nie przesuwa ani nie zoomuje.
+   ========================================================================== */
+function proc(v){ return parseFloat(v); }              // "41%" -> 41
+function naX(v){ return proc(v) * 1.5; }               // % szerokości -> jednostki viewBox 150x100
+function naY(v){ return proc(v); }
+
+// krzywa między dwoma punktami, wybrzuszona prostopadle do odcinka
+function luk(a, b, k){
+  var ax = naX(a.left), ay = naY(a.top), bx = naX(b.left), by = naY(b.top);
+  var mx = (ax + bx) / 2, my = (ay + by) / 2;
+  var dx = bx - ax, dy = by - ay;
+  var cx = mx - dy * k, cy = my + dx * k;
+  return "M" + ax.toFixed(2) + "," + ay.toFixed(2) +
+         " Q" + cx.toFixed(2) + "," + cy.toFixed(2) +
+         " " + bx.toFixed(2) + "," + by.toFixed(2);
+}
+
+function renderMape(){
+  var M = CONFIG.MAPA, P = M.punkty;
+  $("mapa-tlo").src = M.podklad;
+
+  /* --- mgła wojny: w masce biel = mgła widoczna, czerń = otwór --- */
+  var otwory = "";
+  Object.keys(P).forEach(function(id){
+    otwory += '<circle cx="' + naX(P[id].left).toFixed(2) + '" cy="' + naY(P[id].top).toFixed(2) +
+              '" r="' + (M.mgla.promien * 1.5).toFixed(2) + '" fill="#000"/>';
+  });
+  $("mgla-otwory").innerHTML = otwory;
+  document.querySelector("#mgla-rozmycie feGaussianBlur")
+          .setAttribute("stdDeviation", M.mgla.rozmycie);
+  var plaszcz = $("mgla-plaszcz");
+  plaszcz.setAttribute("fill", "var(--mgla-kolor)");
+  plaszcz.setAttribute("opacity", M.mgla.krycie);
+
+  /* --- chmury --- */
+  var chm = $("mapa-chmury");
+  chm.innerHTML = "";
+  M.chmury.forEach(function(c, i){
+    var d = el("div", "chmura " + ["", "b", "c"][i % 3]);
+    d.style.cssText =
+      "left:" + c.left + ";top:" + c.top + ";width:" + c.w + ";height:" + c.h + ";" +
+      "filter:blur(" + c.rozmycie + "px);" +
+      "--op-min:" + c.kryMin + ";--op-max:" + c.kryMax + ";--czas:" + c.czas + ";" +
+      "animation-delay:-" + (i * 9) + "s";
+    chm.appendChild(d);
+  });
+
+  /* --- trasy --- */
+  var k = M.lukTrasy;
+  $("trasy").innerHTML =
+    '<path class="trasa"   d="' + luk(P.park, P.hub,  -k) + '"/>' +
+    '<path class="trasa b" d="' + luk(P.hub,  P.dybow, k) + '"/>';
+
+  /* --- markery --- */
+  var box = $("mapa-punkty");
+  box.innerHTML = "";
+  CONFIG.PUNKTY.forEach(function(p){
+    var poz = P[p.id];
+    if (!poz) return;
+    var b = el("button", "pkt");
+    b.type = "button";
+    b.setAttribute("data-point", p.id);
+    b.setAttribute("aria-label", p.nazwa);
+    b.style.left = poz.left;
+    b.style.top  = poz.top;
+    b.innerHTML =
+      '<svg class="pkt-svg" viewBox="0 0 64 64" aria-hidden="true">' +
+        '<circle class="pk-ring"   cx="32" cy="32" r="9"/>' +
+        '<circle class="pk-ring b" cx="32" cy="32" r="9"/>' +
+        '<circle class="pk-rdzen"  cx="32" cy="32" r="6"/>' +
+        '<circle class="pk-oczko"  cx="32" cy="32" r="2.2"/>' +
+      '</svg>' +
+      '<span class="pkt-nazwa">' + (p.krotka || p.nazwa) + '</span>';
+    b.addEventListener("click", function(){ otworzSheet(p.id); });
+    box.appendChild(b);
+  });
+
+  /* --- lista pod mapą: drugie wejście do tych samych paneli --- */
+  var lista = $("lista-wypraw");
+  lista.innerHTML = "";
+  CONFIG.PUNKTY.forEach(function(p){
+    var b = el("button", "wyprawa");
+    b.type = "button";
+    b.innerHTML =
+      '<span class="wyprawa-n">' + p.nr + '</span>' +
+      '<span class="wyprawa-t"><b>' + (p.krotka || p.nazwa) + '</b>' +
+      '<span>' + p.gatunek + ' · ' + p.czas + '</span></span>' + svg("chev");
+    b.addEventListener("click", function(){ otworzSheet(p.id); });
+    lista.appendChild(b);
+  });
+
+  kalibracja();
+}
+
+/* --- tryb kalibracji: ?cal=1 --- */
+function kalibracja(){
+  if (!/[?&]cal=1(&|$)/.test(location.search)) return;
+  var mapa = $("mapa"), pole = $("kal");
+  mapa.classList.add("kalibracja");
+  pole.hidden = false;
+  pole.textContent = "kalibracja — kliknij w mapę";
+  mapa.addEventListener("click", function(e){
+    var r = mapa.getBoundingClientRect();
+    var linia = "{ top:\"" + ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%\", " +
+                "left:\"" + ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%\" }";
+    pole.textContent = linia + "\nskopiowane do schowka";
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(linia).catch(function(){});
+    }
+  });
+}
+
+/* --- pełna postać po kliknięciu awatara --- */
+function otworzPostac(){
+  var o = $("postac");
+  if (!CONFIG.PROFIL.postac) return;
+  $("postac-img").src = CONFIG.PROFIL.postac;
+  o.hidden = false;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){ o.classList.add("is-open"); });
+  });
+}
+function zamknijPostac(){
+  var o = $("postac");
+  if (o.hidden) return;
+  o.classList.remove("is-open");
+  setTimeout(function(){ o.hidden = true; }, 280);
+}
+$("awatar").addEventListener("click", otworzPostac);
+$("postac-x").addEventListener("click", zamknijPostac);
+$("postac-tlo").addEventListener("click", zamknijPostac);
+
+/* ==========================================================================
+   6. PROFIL — karta, style, achievementy
+   ========================================================================== */
+function renderProfil(){
+  var p = CONFIG.PROFIL;
+  if (p.awatar){                                   // grafika zamiast rysowanego awatara
+    var img = el("img","avatar");
+    img.src = p.awatar; img.alt = ""; img.width = 64; img.height = 64;
+    var stary = document.querySelector("#awatar .avatar");
+    if (stary) stary.replaceWith(img);
+  }
+  $("postac-nick").textContent = p.nick;
+  $("postac-ranga").textContent = p.ranga;
+  $("p-nick").textContent = p.nick;
+  $("p-rank").textContent = p.ranga;
+  $("p-lvl").textContent  = p.poziom;
+  $("p-xp").textContent   = nb(p.xp);
+  $("p-xpmax").textContent= nb(p.xpMax);
+  setTimeout(function(){
+    $("p-xpbar").style.width = Math.round(p.xp / p.xpMax * 100) + "%";
+  }, 240);
+}
+
+function renderStyle(){
+  var box = $("styles");
+  box.innerHTML = "";
+  CONFIG.STYLE.forEach(function(s){
+    var b = el("button","style-btn");
+    b.type = "button";
+    b.setAttribute("aria-pressed", s.id === state.styl ? "true" : "false");
+    var sw = '<span class="sw">' + s.kolory.map(function(c){
+      return '<i style="background:'+c+'"></i>'; }).join("") + '</span>';
+    b.innerHTML = sw + '<span>'+s.nazwa+'</span>';
+    b.addEventListener("click", function(){ ustawStyl(s.id); });
+    box.appendChild(b);
+  });
+}
+function ustawStyl(id){
+  state.styl = id;
+  document.documentElement.setAttribute("data-theme", id);
+  try { localStorage.setItem(LS_KEY, id); } catch(e){}
+  document.querySelectorAll(".style-btn").forEach(function(b, i){
+    b.setAttribute("aria-pressed", CONFIG.STYLE[i].id === id ? "true" : "false");
+  });
+}
+
+function renderAch(){
+  var grid = $("ach-grid");
+  grid.innerHTML = "";
+  var zdobyte = 0;
+  CONFIG.ACHIEVEMENTY.forEach(function(a, i){
+    if (a.data) zdobyte++;
+    var b = el("button", "ach " + (a.data ? "on" : "off"));
+    b.type = "button";
+    b.setAttribute("aria-pressed", i === state.ach ? "true" : "false");
+    var ikona = a.obraz
+      ? '<img src="'+a.obraz+'" alt="" loading="lazy">'   // grafika zamiast rysowanej ikony
+      : svg(a.ikona);
+    b.innerHTML =
+      '<span class="ach-ico'+(a.obraz ? " img" : "")+'">' + ikona +
+      (a.data ? "" : '<span class="ach-lock">'+svg("lock")+'</span>') +
+      '</span><span class="ach-name">'+a.nazwa+'</span>';
+    b.addEventListener("click", function(){ pokazAch(i); });
+    grid.appendChild(b);
+  });
+  $("ach-count").textContent = "· " + zdobyte + " z " + CONFIG.ACHIEVEMENTY.length;
+  pokazAch(state.ach);
+}
+function pokazAch(i){
+  state.ach = i;
+  var a = CONFIG.ACHIEVEMENTY[i];
+  $("ach-detail").innerHTML =
+    '<b>'+a.nazwa+'</b>' +
+    '<p>'+a.warunek+'</p>' +
+    (a.data
+      ? '<span class="ach-status on">Zdobyte · '+a.data+'</span>'
+      : '<span class="ach-status off">Nie zdobyte</span>');
+  document.querySelectorAll(".ach").forEach(function(b, j){
+    b.setAttribute("aria-pressed", j === i ? "true" : "false");
+  });
+}
+
+/* ==========================================================================
+   7. O PROJEKCIE
+   ========================================================================== */
+function renderOdslony(){
+  var box = $("odslony");
+  box.innerHTML = "";
+  CONFIG.ODSLONY.forEach(function(o){
+    var klikalna = !!(o.punkt || o.cel);
+    var b = el(klikalna ? "button" : "div", "odslona" + (klikalna ? "" : " static"));
+    if (klikalna) b.type = "button";
+    b.innerHTML =
+      '<span class="od-n">'+o.rzym+'</span>'+
+      '<span class="od-txt"><span class="od-when">'+o.kiedy+'</span>'+
+      '<b>'+o.tytul+'</b><span>'+o.opis+'</span></span>'+
+      (klikalna ? '<span class="od-go">'+svg("chev")+'</span>' : '');
+    if (klikalna) b.addEventListener("click", function(){
+      if (o.punkt){
+        ustawZakladke("mapa");
+        setTimeout(function(){ otworzSheet(o.punkt); }, 90);
+      } else if (o.cel === "dash"){
+        var d = document.querySelector(".dash");
+        if (d) d.scrollIntoView({ behavior:"smooth", block:"start" });
+      }
+    });
+    box.appendChild(b);
+  });
+}
+
+function renderDash(){
+  var d = CONFIG.DASHBOARD;
+
+  var tiles = $("tiles"); tiles.innerHTML = "";
+  d.kafelki.forEach(function(t){
+    tiles.appendChild(el("div","tile "+(t.akcent||""),
+      '<i>'+t.etykieta+'</i><b>'+t.wartosc+
+      (t.jednostka ? '<small>'+t.jednostka+'</small>' : '')+'</b>'));
+  });
+
+  /* --- słupki: rozkład godzinowy --- */
+  var W=340, H=116, padB=18, padT=6;
+  var max = 0; d.godziny.forEach(function(g){ if (g[1] > max) max = g[1]; });
+  var n = d.godziny.length, gap = 6;
+  var bw = (W - gap*(n-1)) / n;
+  var s = "";
+  d.godziny.forEach(function(g, i){
+    var h = Math.max(3, (g[1]/max) * (H - padB - padT));
+    var x = i*(bw+gap), y = H - padB - h;
+    s += '<rect class="bar-r'+(g[1]===max?" is-on":"")+'" data-h="'+g[0]+'" data-v="'+g[1]+'" '+
+         'x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+
+         '" rx="2.5"><title>'+g[0]+':00 — '+g[1]+' ukończeń</title></rect>';
+    if (i % 2 === 0)
+      s += '<text class="bar-x" x="'+(x+bw/2).toFixed(1)+'" y="'+(H-5)+'">'+g[0]+'</text>';
+  });
+  var ch = $("chart-hours");
+  ch.innerHTML = s;
+  ch.querySelectorAll(".bar-r").forEach(function(r){
+    function on(){
+      ch.querySelectorAll(".bar-r").forEach(function(o){ o.classList.remove("is-on"); });
+      r.classList.add("is-on");
+      $("hour-read").textContent = r.getAttribute("data-h")+":00 · "+
+        nb(r.getAttribute("data-v"))+" ukończeń";
+    }
+    r.addEventListener("mouseenter", on);
+    r.addEventListener("click", on);
+  });
+
+  /* --- pierścień: udział odsłon (kolory z klas .k0–.k4, żyją w motywie) --- */
+  var suma = 0; d.odslony.forEach(function(w){ suma += w[1]; });
+  var r = 36, obw = 2*Math.PI*r, off = 0, gg = "";
+  d.odslony.forEach(function(w, i){
+    var len = (w[1]/suma) * obw;
+    gg += '<circle class="don-seg k'+(i%5)+'" cx="50" cy="50" r="'+r+'" '+
+          'stroke-dasharray="'+(len-2.2).toFixed(2)+' '+(obw-len+2.2).toFixed(2)+'" '+
+          'stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 50 50)">'+
+          '<title>'+w[0]+' — '+w[1]+'%</title></circle>';
+    off += len;
+  });
+  gg += '<text class="don-mid" x="50" y="47">'+d.odslony.length+'</text>'+
+        '<text class="don-mid-s" x="50" y="60">'+d.pierscienPodpis.toUpperCase()+'</text>';
+  $("chart-ring").innerHTML = gg;
+
+  var lg = $("ring-legend"); lg.innerHTML = "";
+  d.odslony.forEach(function(w, i){
+    lg.appendChild(el("div", "k"+(i%5), '<i></i>'+w[0]+'<b>'+w[1]+'%</b>'));
+  });
+
+  /* --- ranking --- */
+  var maxP = d.ranking[0][1];
+  var ul = $("rank"); ul.innerHTML = "";
+  d.ranking.forEach(function(row, i){
+    var li = el("li", null,
+      '<span class="rank-n">'+(i+1)+'.</span>'+
+      '<span class="rank-b"><span>'+row[0]+'<b>'+nb(row[1])+' pkt</b></span>'+
+      '<span class="rank-t"><i></i></span></span>');
+    ul.appendChild(li);
+    (function(bar, pct){
+      setTimeout(function(){ bar.style.width = pct + "%"; }, 260 + i*90);
+    })(li.querySelector(".rank-t i"), Math.round(row[1]/maxP*100));
+  });
+}
+function renderRole(){
+  var box = $("roles"); box.innerHTML = "";
+  var nazwa = nazwijOdbiorce();
+  var tytulWy = nazwa ? "Po stronie " + nazwa : "Po Waszej stronie";
+  box.appendChild(el("div","role",
+    '<div class="role-h">'+svg("mega")+'<b>'+tytulWy+'</b></div><ul>'+
+    CONFIG.ROLE.wy.map(function(x){ return "<li>"+x+"</li>"; }).join("")+'</ul>'));
+  box.appendChild(el("div","role us",
+    '<div class="role-h">'+svg("build")+'<b>Po naszej stronie</b></div><ul>'+
+    CONFIG.ROLE.my.map(function(x){ return "<li>"+x+"</li>"; }).join("")+'</ul>'));
+}
+
+/* ==========================================================================
+   8. START
+   ========================================================================== */
+(function init(){
+  var zapis = null;
+  try { zapis = localStorage.getItem(LS_KEY); } catch(e){}
+  if (zapis && ["hist","cyber","fantasy"].indexOf(zapis) > -1) state.styl = zapis;
+  document.documentElement.setAttribute("data-theme", state.styl);
+
+  aplikujConfig();
+  renderMape();
+  renderProfil();
+  renderStyle();
+  renderAch();
+  renderOdslony();
+  renderDash();
+  renderRole();
+  ustawZakladke("mapa");
+})();
+</script>
+</body>
+</html>

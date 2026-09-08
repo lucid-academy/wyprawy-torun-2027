@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eksport podkładu mapowego — Toruń</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+  :root{
+    --mono:"JetBrains Mono",ui-monospace,Consolas,"Liberation Mono",monospace;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    --line:#2b2e3d; --fg:#e6e9f5; --dim:#8b93b5; --hot:#ff5a3c;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#07080d;color:var(--fg);font-family:var(--sans);overflow:hidden}
+
+  /* tryb dopasowany do okna (domyślny) */
+  #stage{position:absolute;inset:0}
+  #map{width:100%;height:100%;background:#0b0b0b}
+
+  /* tryb stałego kadru 1800x1200 */
+  body.staly{overflow:auto}
+  body.staly #hud{position:static;width:1800px;margin:16px auto 12px}
+  body.staly #stage{position:static;width:1800px;height:1200px;margin:0 auto 40px;
+    outline:1px dashed var(--hot)}
+
+  /* przyciemnienie podkładu — działa też przy zapisie PNG */
+  body.ciemniej .leaflet-tile-pane{filter:brightness(.62) contrast(1.25) saturate(.55)}
+
+  #hud{
+    position:fixed;left:14px;bottom:14px;z-index:1000;width:380px;
+    background:rgba(18,19,26,.95);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;backdrop-filter:blur(6px);
+  }
+  #hud.ukryty > .tresc{display:none}
+  #hud h1{margin:0;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--dim);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .tresc{margin-top:11px}
+
+  dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:baseline}
+  dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+  dd{margin:0;font-family:var(--mono);font-size:12px;white-space:pre-line}
+
+  .rzad{display:flex;gap:7px;align-items:center;margin-top:11px;flex-wrap:wrap}
+  .rzad[hidden]{display:none}   /* display:flex bije domyślne [hidden] */
+  label.pole{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  label.pole span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--dim)}
+  select,input[type=text]{
+    font:inherit;font-size:11.5px;width:100%;color:var(--fg);background:#1c1f2b;
+    border:1px solid var(--line);border-radius:8px;padding:6px 9px;
+  }
+  input[type=text]::placeholder{color:#5d6480}
+  button{
+    font:inherit;font-size:11.5px;color:var(--fg);background:#1c1f2b;
+    border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;
+    transition:background .15s,border-color .15s;
+  }
+  button:hover{background:#262a39;border-color:#3f4459}
+  button.akcent{background:#2a1a16;border-color:#5a3428;color:#ffb9a8}
+  button.akcent:hover{border-color:var(--hot)}
+  button[aria-pressed="true"]{background:#2a1a16;border-color:var(--hot);color:#ffb9a8}
+  .checkbox{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);cursor:pointer}
+
+  .info{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--dim)}
+  .info b{color:var(--fg);font-weight:600}
+  .info a{color:#9fb4ff}
+  .info.alarm{color:#ffb9a8}
+  .info[hidden]{display:none}
+  .attr{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);
+    font-size:10px;line-height:1.5;color:var(--dim)}
+  .attr code{font-family:var(--mono);font-size:9.5px;color:#b9c2e6}
+  .leaflet-container{background:#0b0b0b}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <h1><span>Podkład mapowy — kadr</span><button id="btn-zwin" title="Zwiń (klawisz H)">–</button></h1>
+
+  <div class="tresc">
+    <dl>
+      <dt>Zoom</dt>        <dd id="v-zoom">—</dd>
+      <dt>Środek</dt>      <dd id="v-srodek">—</dd>
+      <dt>BBox S W N E</dt><dd id="v-bbox">—</dd>
+      <dt>Kadr</dt>        <dd id="v-kadr">—</dd>
+      <dt>Skala</dt>       <dd id="v-skala">—</dd>
+    </dl>
+
+    <div class="rzad">
+      <label class="pole"><span>Źródło kafelków</span>
+        <select id="zrodlo"></select>
+      </label>
+    </div>
+    <div class="rzad" id="rzad-klucz">
+      <label class="pole"><span>Klucz API CARTO</span>
+        <input type="text" id="klucz" placeholder="wklej klucz — zapisze się lokalnie" autocomplete="off">
+      </label>
+    </div>
+    <div class="rzad" id="rzad-url" hidden>
+      <label class="pole"><span>Własny szablon URL</span>
+        <input type="text" id="wlasnyUrl" placeholder="https://…/{z}/{x}/{y}.png" autocomplete="off">
+      </label>
+    </div>
+
+    <div class="rzad">
+      <label class="checkbox"><input type="checkbox" id="ciemniej"> przyciemnij podkład</label>
+    </div>
+
+    <div class="rzad">
+      <button id="btn-staly" aria-pressed="false" class="akcent">Kadr 1800 × 1200</button>
+      <button id="btn-png">Zapisz PNG</button>
+      <button id="btn-kopiuj">Kopiuj kadr</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+
+    <p class="info alarm" id="alarm-carto">
+      CARTO wymaga dziś klucza — bez niego kafelki mają na sobie napis
+      <b>API KEY REQUIRED</b>. Darmowy klucz: <b>carto.com/basemaps</b>.
+      Bez klucza wybierz Esri albo Stadia — są czyste, ale mają etykiety.
+    </p>
+    <p class="info" id="podpowiedz">
+      Kółko myszy zmienia zoom co <b>0,25</b>. <b>Zapisz PNG</b> skleja kafelki w plik
+      o dokładnym rozmiarze kontenera — działa też, gdy kadr nie mieści się na ekranie.
+    </p>
+    <p class="info alarm" id="ostrzezenie" hidden></p>
+
+    <p class="attr">Atrybucja do dopisania ręcznie w demo:<br><code id="v-attr">—</code></p>
+  </div>
+</div>
+
+<div id="stage"><div id="map"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ============================================================
+   Narzędzie jednorazowe. Nie jest częścią demo, nic go z nim
+   nie łączy — służy tylko do wycięcia podkładu w proporcji 3:2.
+   ============================================================ */
+
+var START = { srodek: [53.00790, 18.59250], zoom: 14.5 };   // Bydgoskie Przedmieście
+var KADR  = { w: 1800, h: 1200 };
+var LS_KLUCZ = "mapexport.carto";
+
+var ZRODLA = {
+  carto: {
+    nazwa: "CARTO Dark Matter — bez etykiet (wymaga klucza)",
+    url: "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
+    sub: ["a","b","c","d"], maxZoom: 20, retina: true, klucz: true,
+    attr: "© OpenStreetMap contributors © CARTO"
+  },
+  esri: {
+    nazwa: "Esri Dark Gray — bez klucza, z etykietami",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    sub: [], maxZoom: 16, retina: false,
+    attr: "© Esri, HERE, Garmin, © OpenStreetMap contributors"
+  },
+  stadia: {
+    nazwa: "Stadia Alidade Dark — bez klucza, z etykietami",
+    url: "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+    sub: [], maxZoom: 20, retina: true,
+    attr: "© Stadia Maps © OpenMapTiles © OpenStreetMap contributors"
+  },
+  wlasne: {
+    nazwa: "Własny szablon URL",
+    url: "", sub: ["a","b","c"], maxZoom: 20, retina: false, wlasne: true,
+    attr: ""
+  }
+};
+var aktywne = "carto";
+
+var map = L.map("map", {
+  center: START.srodek,
+  zoom: START.zoom,
+  zoomControl: false,          // bez kontrolek — kadr ma być czysty
+  attributionControl: false,   // atrybucja dopisywana ręcznie w demo
+  zoomSnap: 0.25,
+  zoomDelta: 0.25,
+  wheelPxPerZoomLevel: 120
+});
+
+var warstwa = null;
+
+function szablon(id){
+  var z = ZRODLA[id];
+  var u = z.wlasne ? (document.getElementById("wlasnyUrl").value.trim() || z.url) : z.url;
+  if (z.klucz){
+    var k = document.getElementById("klucz").value.trim();
+    if (k) u += (u.indexOf("?") > -1 ? "&" : "?") + "api_key=" + encodeURIComponent(k);
+  }
+  return u;
+}
+
+function zbudujWarstwe(){
+  var z = ZRODLA[aktywne];
+
+  // panel przestawiamy zawsze — także wtedy, gdy nie ma z czego zbudować warstwy,
+  // bo inaczej nie dałoby się wpisać własnego URL-a
+  document.getElementById("v-attr").textContent = z.attr || "(uzupełnij zgodnie z licencją źródła)";
+  document.getElementById("rzad-klucz").hidden = !z.klucz;
+  document.getElementById("rzad-url").hidden   = !z.wlasne;
+  document.getElementById("alarm-carto").hidden =
+    !(z.klucz && !document.getElementById("klucz").value.trim());
+
+  if (warstwa){ map.removeLayer(warstwa); warstwa = null; }
+  var u = szablon(aktywne);
+  if (!u) return;
+  var opcje = { maxZoom: z.maxZoom, detectRetina: z.retina, crossOrigin: "anonymous" };
+  if (z.sub.length) opcje.subdomains = z.sub;
+  warstwa = L.tileLayer(u, opcje).addTo(map);
+}
+
+/* ---------- odczyt kadru ---------- */
+function n(x, m){ return x.toFixed(m); }
+
+function odswiez(){
+  var z = map.getZoom(), c = map.getCenter(), b = map.getBounds(), s = map.getSize();
+  document.getElementById("v-zoom").textContent   = n(z, 2);
+  document.getElementById("v-srodek").textContent = n(c.lat, 6) + ", " + n(c.lng, 6);
+  document.getElementById("v-bbox").textContent   =
+    n(b.getSouth(), 6) + "  " + n(b.getWest(), 6) + "\n" +
+    n(b.getNorth(), 6) + "  " + n(b.getEast(), 6);
+  document.getElementById("v-kadr").textContent   = s.x + " × " + s.y + " px";
+  var mpp = 40075016.686 * Math.cos(c.lat * Math.PI / 180) / (256 * Math.pow(2, z));
+  document.getElementById("v-skala").textContent =
+    mpp.toFixed(2) + " m/px · " + Math.round(s.x * mpp) + " m w poziomie";
+  sprawdzMiejsce();
+}
+map.on("move zoom moveend zoomend resize", odswiez);
+
+/* ---------- stały kadr 1800 × 1200 ---------- */
+var btnStaly = document.getElementById("btn-staly");
+btnStaly.addEventListener("click", function(){
+  var on = document.body.classList.toggle("staly");
+  btnStaly.setAttribute("aria-pressed", on ? "true" : "false");
+  btnStaly.textContent = on ? "Wróć do pełnego okna" : "Kadr 1800 × 1200";
+  map.invalidateSize({ animate:false });
+  if (on) window.scrollTo(0, 0);
+  odswiez();
+});
+
+function sprawdzMiejsce(){
+  var o = document.getElementById("ostrzezenie");
+  if (!document.body.classList.contains("staly")){ o.hidden = true; return; }
+  var bx = KADR.w - document.documentElement.clientWidth;
+  var by = KADR.h - document.documentElement.clientHeight;
+  if (bx > 0 || by > 0){
+    o.hidden = false;
+    o.innerHTML = "Kadr nie mieści się w oknie (brakuje <b>" + Math.max(0,bx) + " × " +
+      Math.max(0,by) + " px</b>). Zmniejsz powiększenie przeglądarki (Ctrl + −) " +
+      "albo po prostu użyj <b>Zapisz PNG</b> — plik wyjdzie w pełnym rozmiarze.";
+  } else { o.hidden = true; }
+}
+window.addEventListener("resize", sprawdzMiejsce);
+
+/* ---------- zapis PNG: sklejenie kafelków w rozmiarze kontenera ---------- */
+document.getElementById("btn-png").addEventListener("click", function(){
+  var btn = this, etykieta = btn.textContent;
+  btn.disabled = true; btn.textContent = "Składam…";
+  zapiszPNG().then(function(k){
+    btn.textContent = k;
+    setTimeout(function(){ btn.textContent = etykieta; btn.disabled = false; }, 2800);
+  });
+});
+
+function urlKafelka(z, x, y, tz){
+  var src = ZRODLA[aktywne];
+  var u = szablon(aktywne);
+  var sub = src.sub.length ? src.sub[Math.abs(x + y) % src.sub.length] : "";
+  return u.replace("{s}", sub)
+          .replace("{z}", tz)
+          .replace("{x}", x)
+          .replace("{y}", y)
+          .replace("{r}", src.retina ? "@2x" : "");
+}
+
+function zapiszPNG(){
+  var s = map.getSize(), W = s.x, H = s.y;
+  var z = map.getZoom();
+  var tz = Math.min(Math.round(z), ZRODLA[aktywne].maxZoom);
+  var skala = Math.pow(2, z - tz);
+  var srodekPx = map.project(map.getCenter(), tz);
+  var lg = L.point(srodekPx.x - W / skala / 2, srodekPx.y - H / skala / 2);
+
+  var x0 = Math.floor(lg.x / 256), x1 = Math.floor((lg.x + W / skala) / 256);
+  var y0 = Math.floor(lg.y / 256), y1 = Math.floor((lg.y + H / skala) / 256);
+  var ile = Math.pow(2, tz);
+
+  var plotno = document.createElement("canvas");
+  plotno.width = W; plotno.height = H;
+  var ctx = plotno.getContext("2d");
+  ctx.fillStyle = "#0b0b0b";
+  ctx.fillRect(0, 0, W, H);
+  if (document.body.classList.contains("ciemniej")){
+    ctx.filter = "brightness(0.62) contrast(1.25) saturate(0.55)";
+  }
+
+  var zadania = [];
+  for (var x = x0; x <= x1; x++){
+    for (var y = y0; y <= y1; y++){
+      if (y < 0 || y >= ile) continue;
+      (function(tx, ty){
+        var wrap = ((tx % ile) + ile) % ile;
+        zadania.push(new Promise(function(res){
+          var img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = function(){
+            ctx.drawImage(img,
+              (tx * 256 - lg.x) * skala, (ty * 256 - lg.y) * skala,
+              256 * skala, 256 * skala);
+            res(true);
+          };
+          img.onerror = function(){ res(false); };
+          img.src = urlKafelka(z, wrap, ty, tz);
+        }));
+      })(x, y);
+    }
+  }
+
+  return Promise.all(zadania).then(function(w){
+    var brak = w.filter(function(ok){ return !ok; }).length;
+    try {
+      var c = map.getCenter();
+      var a = document.createElement("a");
+      a.download = "torun_z" + n(z,2).replace(".","-") + "_" +
+                   n(c.lat,5).replace(".","-") + "_" + n(c.lng,5).replace(".","-") +
+                   "_" + W + "x" + H + ".png";
+      a.href = plotno.toDataURL("image/png");
+      a.click();
+      return brak ? "Zapisano (brak " + brak + " kafelków)" : "Zapisano PNG";
+    } catch (e){
+      return "Źródło blokuje zapis — użyj zrzutu ekranu";
+    }
+  });
+}
+
+/* ---------- kopiowanie danych kadru ---------- */
+document.getElementById("btn-kopiuj").addEventListener("click", function(){
+  var btn = this, b = map.getBounds(), c = map.getCenter(), s = map.getSize();
+  var tekst = JSON.stringify({
+    srodek: [ +n(c.lat,6), +n(c.lng,6) ],
+    zoom: +n(map.getZoom(),2),
+    bbox: { poludnie:+n(b.getSouth(),6), zachod:+n(b.getWest(),6),
+            polnoc:+n(b.getNorth(),6),   wschod:+n(b.getEast(),6) },
+    kadrPx: [ s.x, s.y ],
+    zrodlo: ZRODLA[aktywne].nazwa
+  }, null, 2);
+  var gotowe = function(){
+    btn.textContent = "Skopiowane";
+    setTimeout(function(){ btn.textContent = "Kopiuj kadr"; }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(tekst).then(gotowe, function(){ zapasowe(tekst, gotowe); });
+  } else { zapasowe(tekst, gotowe); }
+});
+function zapasowe(tekst, gotowe){
+  var ta = document.createElement("textarea");
+  ta.value = tekst; ta.style.cssText = "position:fixed;top:-1000px";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); gotowe(); } catch(e){ prompt("Skopiuj ręcznie:", tekst); }
+  document.body.removeChild(ta);
+}
+
+/* ---------- sterowanie ---------- */
+var selZrodlo = document.getElementById("zrodlo");
+Object.keys(ZRODLA).forEach(function(id){
+  var o = document.createElement("option");
+  o.value = id; o.textContent = ZRODLA[id].nazwa;
+  selZrodlo.appendChild(o);
+});
+selZrodlo.value = aktywne;
+selZrodlo.addEventListener("change", function(){ aktywne = this.value; zbudujWarstwe(); });
+
+var polKlucz = document.getElementById("klucz");
+try { polKlucz.value = localStorage.getItem(LS_KLUCZ) || ""; } catch(e){}
+polKlucz.addEventListener("change", function(){
+  try { localStorage.setItem(LS_KLUCZ, this.value.trim()); } catch(e){}
+  zbudujWarstwe();
+});
+document.getElementById("wlasnyUrl").addEventListener("change", zbudujWarstwe);
+
+document.getElementById("ciemniej").addEventListener("change", function(){
+  document.body.classList.toggle("ciemniej", this.checked);
+});
+
+document.getElementById("btn-reset").addEventListener("click", function(){
+  map.setView(START.srodek, START.zoom);
+});
+
+var hud = document.getElementById("hud"), btnZwin = document.getElementById("btn-zwin");
+function przelacz(){ btnZwin.textContent = hud.classList.toggle("ukryty") ? "+" : "–"; }
+btnZwin.addEventListener("click", przelacz);
+document.addEventListener("keydown", function(e){
+  if ((e.key === "h" || e.key === "H") &&
+      !/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName)) przelacz();
+});
+
+zbudujWarstwe();
+odswiez();
+</script>
+</body>
+</html>
