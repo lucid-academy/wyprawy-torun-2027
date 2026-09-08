@@ -817,6 +817,21 @@ p.sec-intro{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--text-dim
 .always b{display:block;font-size:15px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
 .always p{margin:0;font-size:13px;line-height:1.6;color:var(--text-dim)}
 
+/* o wykonawcy — logo zostaje w barwach marki we wszystkich motywach */
+.o-nas{display:flex;gap:15px;align-items:flex-start}
+.o-nas-logo{width:76px;height:76px;flex:0 0 auto;object-fit:contain;display:block}
+.o-nas-tresc{flex:1;min-width:0}
+.o-nas-tresc b{display:block;font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:5px}
+.o-nas-tresc p{margin:0 0 9px;font-size:12.5px;line-height:1.55;color:var(--text-dim)}
+.o-nas-www{
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);border-bottom:1px solid color-mix(in srgb,var(--accent-2) 40%,transparent);
+  padding-bottom:2px;transition:color var(--t) var(--ease);
+}
+.o-nas-www:hover{color:var(--accent)}
+.o-nas-www svg{width:11px;height:11px}
+
 .foot{
   margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
   font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
@@ -1078,6 +1093,22 @@ p.sec-intro{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--text-dim
               Frekwencja kumuluje się zamiast zerować.</p>
           </div>
 
+          <hr class="rule">
+
+          <div class="o-nas">
+            <img class="o-nas-logo" id="o-nas-logo" alt="Lucid Academy">
+            <div class="o-nas-tresc">
+              <b>Lucid Academy</b>
+              <p id="o-nas-tekst"></p>
+              <a class="o-nas-www" id="o-nas-www" href="#" target="_blank" rel="noopener">
+                lucidacademy.pl
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 17L17 7M9 7h8v8"/></svg>
+              </a>
+            </div>
+          </div>
+
           <div class="foot">
             <span id="foot-left">Lucid Academy</span>
             <span id="foot-right">Demo · sezon 2027</span>
@@ -1144,6 +1175,18 @@ var CONFIG = {
   ODBIORCA_SKROT: null,
   WYKONAWCA: "Lucid Academy",
 
+  // Blok „o wykonawcy” w zakładce O projekcie. Tekst celowo bez nazw konkretnych
+  // wdrożeń — dopisz te, którymi chcesz się pochwalić przed tym konkretnym odbiorcą.
+  O_NAS: {
+    logo: "assets/lucid-academy.png",
+    www:  "https://lucidacademy.pl",
+    tekst: "Projektujemy i wdrażamy interaktywne narzędzia dla instytucji publicznych — "+
+           "gry miejskie, wizualizacje danych i aplikacje wydarzeniowe. Pracujemy "+
+           "w Toruniu i znamy realia miejskich instytucji od środka: budżety, terminy "+
+           "i sprawozdawczość. Bierzemy całość — od scenariusza i treści, przez "+
+           "platformę i hosting, po raport na koniec roku."
+  },
+
   WIDEO: {
     intro:        "assets/intro.mp4",
     introPoster:  "assets/poster.jpg",
@@ -1200,7 +1243,7 @@ var CONFIG = {
       wideo:"hub", wideoPodpis:"Postacie z pierwszej odsłony — materiał z produkcji"
     },
     {
-      id:"park", nr:2, nazwa:"Park na Bydgoskim",
+      id:"park", nr:2, nazwa:"Park miejski",
       gatunek:"Wyprawa badawcza", kicker:"Odsłona II · lato",
       opis:"W parku wyrosło coś, czego nie ma w żadnym atlasie. Grzyby, które świecą dobę "+
            "po deszczu, i pnącze, które w tydzień przeszło pół alei. Ktoś to tu przyniósł "+
@@ -1267,7 +1310,7 @@ var CONFIG = {
     { rzym:"I",  kiedy:"Wiosna",   tytul:"Kulturalny hub / Bydgoskie Przedmieście",
       opis:"Cztery warstwy miasta pod jednym adresem i świadkowie, którzy nie mogli się spotkać.",
       punkt:"hub" },
-    { rzym:"II", kiedy:"Lato",     tytul:"Park na Bydgoskim",
+    { rzym:"II", kiedy:"Lato",     tytul:"Park miejski",
       opis:"Gatunki, których nie ma w atlasie, i pytanie, czy park zostaje otwarty.",
       punkt:"park" },
     { rzym:"III",kiedy:"Jesień",   tytul:"Zamek Dybowski",
@@ -1292,7 +1335,7 @@ var CONFIG = {
     godziny: [["10",58],["11",112],["12",196],["13",241],["14",208],["15",157],
               ["16",131],["17",172],["18",268],["19",224],["20",95]],
     // Platforma nie zbiera danych o wieku — panel pokazuje rozkład po odsłonach.
-    odslony: [["Kulturalny hub",42],["Park na Bydgoskim",33],["Zamek Dybowski",25]],
+    odslony: [["Kulturalny hub",42],["Park miejski",33],["Zamek Dybowski",25]],
     pierscienPodpis:"odsłony",
     ranking: [["Ola Jankowska",2140],["Marcin W.",1985],["Hanna Zawadzka",1870],
               ["Ekipa z Podgórza",1640],["Tomek i Zuzia",1505]]
@@ -1357,6 +1400,12 @@ function aplikujConfig(){
   $("pitch-sub").textContent   = CONFIG.PODTYTUL;
   $("brand-intro").textContent = CONFIG.WYKONAWCA;
   $("foot-left").textContent   = CONFIG.WYKONAWCA;
+  var on = CONFIG.O_NAS;
+  $("o-nas-logo").src = on.logo;
+  $("o-nas-tekst").textContent = on.tekst;
+  $("o-nas-www").href = on.www;
+  $("o-nas-www").firstChild.textContent = on.www.replace(/^https?:\/\//, "") + " ";
+
   $("foot-right").textContent  = CONFIG.ODBIORCA
     ? "Demo dla: " + CONFIG.ODBIORCA
     : "Demo · sezon 2027";
