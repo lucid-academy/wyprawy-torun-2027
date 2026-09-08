@@ -223,26 +223,42 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
 .doc{
   position:absolute;
   left:25%;top:5%;width:44.6%;height:87%;
-  border:1.5px solid var(--accent-2);border-radius:5px;
+  border:1px solid color-mix(in srgb,var(--accent-2) 55%,transparent);border-radius:5px;
   rotate:-1deg;
   display:flex;align-items:flex-end;justify-content:center;
-  padding-bottom:9%;
-  animation:docpulse 2.4s var(--ease) infinite;
+  padding-bottom:3.5%;
+  animation:docpulse 2.8s var(--ease) infinite;
   transition:transform 200ms var(--ease);
 }
 .doc[hidden]{display:none}
-.doc:hover{transform:scale(1.025)}
-.doc-label{
-  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.26em;
-  text-transform:uppercase;color:var(--accent-ink);
-  background:var(--accent);padding:6px 14px;border-radius:999px;
-  box-shadow:var(--glow);
-  display:inline-flex;align-items:center;gap:6px;
+
+/* pełny ekran wideo — na telefonie obraca kadr do poziomu, jak w YouTube */
+.fs-btn{
+  position:absolute;right:10px;bottom:10px;z-index:4;
+  width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+  color:#fff;background:rgba(8,10,18,.55);border:1px solid rgba(255,255,255,.2);
+  transition:background var(--t) var(--ease);
 }
-.doc-label svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
+.fs-btn[hidden]{display:none}
+.fs-btn:hover{background:rgba(8,10,18,.88)}
+.fs-btn svg{width:15px;height:15px}
+video:fullscreen,video:-webkit-full-screen{
+  width:100%;height:100%;object-fit:contain;background:#000;
+}
+.doc:hover{transform:scale(1.02)}
+/* pigułka siedzi na pustym dole listu — stonowana, nie kryjąca pomarańczem */
+.doc-label{
+  font-family:var(--mono);font-size:8px;font-weight:600;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--mapa-etykieta);
+  background:rgba(10,8,14,.62);padding:5px 11px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--accent) 50%,transparent);
+  box-shadow:0 2px 10px rgba(0,0,0,.5);
+  display:inline-flex;align-items:center;gap:5px;backdrop-filter:blur(2px);
+}
+.doc-label svg{width:9px;height:9px;stroke:var(--accent);fill:none;stroke-width:2.4}
 @keyframes docpulse{
-  0%,100%{box-shadow:0 0 0 600px rgba(2,3,10,.38),0 0 14px 1px var(--accent)}
-  50%    {box-shadow:0 0 0 600px rgba(2,3,10,.38),0 0 30px 7px var(--accent)}
+  0%,100%{box-shadow:0 0 0 600px rgba(2,3,10,.34),0 0 10px 0 color-mix(in srgb,var(--accent) 45%,transparent)}
+  50%    {box-shadow:0 0 0 600px rgba(2,3,10,.34),0 0 20px 3px color-mix(in srgb,var(--accent) 55%,transparent)}
 }
 
 .intro-hint{
@@ -257,8 +273,8 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
    ========================================================================== */
 .screen-portal{background:var(--bg)}
 .hdr{
-  display:flex;align-items:center;gap:12px;
-  padding:14px 16px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:9px;
+  padding:13px 13px 13px 14px;border-bottom:1px solid var(--line);
   background:var(--bg);z-index:5;flex:0 0 auto;
 }
 .icon-btn{
@@ -276,10 +292,12 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hdr-title span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--text-mute);margin-top:1px}
+/* chip celowo drobny — tytuł ma się zmieścić w całości */
 .chip-demo{
-  font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.18em;
-  padding:5px 9px;border-radius:6px;color:var(--accent);
-  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 34%,transparent);
+  flex:0 0 auto;align-self:flex-start;margin-top:2px;opacity:.8;
+  font-family:var(--mono);font-size:7.5px;font-weight:700;letter-spacing:.14em;
+  padding:3px 6px;border-radius:5px;color:var(--accent);
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
 }
 
 .panels{flex:1;position:relative;overflow:hidden}
@@ -497,7 +515,8 @@ button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:p
   border:1px solid var(--line-strong);
   border:1px solid color-mix(in srgb,var(--accent-2) 38%,transparent);
 }
-.sheet-desc{margin:0 0 16px;font-size:14px;line-height:1.62;color:var(--text-dim)}
+.sheet-desc{margin:0 0 16px;font-size:14px;line-height:1.62;color:var(--text-dim);
+  white-space:pre-line}   /* opisy mają akapity rozdzielone pustą linią */
 .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
 .meta-item{
   flex:1 1 auto;min-width:96px;
@@ -874,12 +893,17 @@ p.sec-intro{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--text-dim
         <button class="play-btn" id="btn-play" aria-label="Odtwórz intro">
           <span class="play-ring"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span>
         </button>
-        <button class="doc" id="btn-doc" hidden aria-label="Otwórz akta sprawy">
+        <button class="doc" id="btn-doc" hidden aria-label="Rozpocznij">
           <span class="doc-label">
             <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h13M13 6l6 6-6 6"/></svg>
-            Otwórz
+            Rozpocznij
           </span>
+        </button>
+        <button class="fs-btn" id="btn-fs" hidden aria-label="Pełny ekran">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg>
         </button>
       </div>
 
@@ -1234,25 +1258,30 @@ var CONFIG = {
     {
       id:"hub", nr:1, nazwa:"Kulturalny hub / Bydgoskie Przedmieście",
       krotka:"Kulturalny hub",
-      gatunek:"Wiele warstw miasta", kicker:"Odsłona I · wiosna",
-      opis:"Wille Bydgoskiego Przedmieścia to najmłodsza warstwa tej opowieści. Pod nimi "+
-           "leżą jeszcze trzy inne miasta i wszystkie mają coś do dodania. Po drodze "+
-           "zaczepiają cię ludzie, którzy nigdy nie mogli się spotkać: zakonnik, medyk "+
-           "w masce, kobieta w sukni z czasów, gdy były tu jeszcze ogrody, i pracownik "+
-           "cegielni, z której wypalono cegły na te ściany. Każde z nich pamięta ten sam "+
-           "adres inaczej i każde ma powód, żeby coś przemilczeć.",
+      gatunek:"Tajemnica dzielnicy", kicker:"Odsłona I · wiosna",
+      opis:"Czworo ludzi szukało tu tego samego i żadne nie doszło do końca. Zakonnik "+
+           "notował, co znalazł pod fundamentami, i urwał w połowie zdania. Medyk w masce "+
+           "przyszedł, gdy dzielnicy jeszcze nie było, i został dłużej, niż powinien. "+
+           "Kobieta w sukni pamięta ogrody tam, gdzie dziś stoją kamienice. Pracownik "+
+           "cegielni wypalał cegły na ściany, w których teraz stoisz.\n\n"+
+           "Idziesz ich śladem przez Bydgoskie Przedmieście i składasz z czterech "+
+           "niepełnych relacji jedną — o tym, jak ta dzielnica stawała się sobą "+
+           "i dlaczego hub wygląda dokładnie tak, jak wygląda. Każde z nich coś "+
+           "przemilcza. Nie każde z tego samego powodu.",
       czas:"60–75 min", poziom:"Średni", dystans:"ok. 2,5 km",
       wideo:"hub", wideoPodpis:"Postacie z pierwszej odsłony — materiał z produkcji"
     },
     {
       id:"park", nr:2, nazwa:"Park miejski",
       gatunek:"Wyprawa badawcza", kicker:"Odsłona II · lato",
-      opis:"W parku wyrosło coś, czego nie ma w żadnym atlasie. Grzyby, które świecą dobę "+
-           "po deszczu, i pnącze, które w tydzień przeszło pół alei. Ktoś to tu przyniósł "+
-           "albo coś się obudziło — na razie nie wiadomo, która wersja jest gorsza. Idziesz "+
-           "z ekipą, która ma to opisać, zanim zrobi to prasa: liczysz okazy, pobierasz "+
-           "próbki, sprawdzasz, dokąd sięga. Na końcu trasy odpowiadasz na jedno pytanie "+
-           "i od tej odpowiedzi zależy, czy park zostaje otwarty.",
+      opis:"Pierwszy zgłosił to stróż: grzyby, które świecą jeszcze dobę po deszczu. "+
+           "Potem pnącze, które w tydzień przeszło pół alei i nie zatrzymało się na kamieniu. "+
+           "Nie ma tego w żadnym atlasie. Ktoś to tu przyniósł albo park miał to w sobie "+
+           "od dawna i dopiero teraz mu się przypomniało — na razie nie wiadomo, która "+
+           "wersja jest gorsza.\n\n"+
+           "Wchodzisz z ekipą, która ma opisać okazy, zanim zrobi to prasa: liczysz, "+
+           "mierzysz, pobierasz próbki, nanosisz zasięg na mapę. Na końcu trasy zapada "+
+           "decyzja, czy park zostaje otwarty. Podejmujesz ją Ty.",
       czas:"50–65 min", poziom:"Średni", dystans:"ok. 2 km",
       okladka:"assets/okladka-park.jpg"
     },
@@ -1260,8 +1289,10 @@ var CONFIG = {
       id:"dybow", nr:3, nazwa:"Zamek Dybowski",
       gatunek:"Post-apokalipsa", kicker:"Odsłona III · jesień",
       opis:"Sygnał wraca co kilkanaście minut i za każdym razem urywa się w tym samym "+
-           "miejscu. Na lewym brzegu nie ma już prądu ani mostu, którym dałoby się szybko "+
-           "wrócić, a z zamku zostały mury i to, co ludzie zdążyli w nich zostawić. "+
+           "miejscu — jakby ktoś nadawał z pamięci i za każdym razem zapominał tak samo. "+
+           "Na lewym brzegu nie ma prądu ani mostu, którym dałoby się szybko wrócić. "+
+           "Z zamku zostały mury i to, co ludzie zdążyli w nich zostawić, kiedy stąd "+
+           "uciekali.\n\n"+
            "Przeszukujesz je po kolei, licząc, ile wody i baterii da się jeszcze unieść, "+
            "i idziesz w stronę nadajnika. Ktoś tam jest. Pytanie brzmi, od jak dawna.",
       czas:"75–90 min", poziom:"Trudny", dystans:"ok. 3 km",
@@ -1429,13 +1460,41 @@ function aplikujConfig(){
 var vid = $("intro-video"), btnPlay = $("btn-play"), btnDoc = $("btn-doc"),
     endFrame = $("intro-endframe"), hint = $("intro-hint"), btnSkip = $("btn-skip");
 
+/* --- pełny ekran wideo ---------------------------------------------------
+   Na Androidzie: Fullscreen API + blokada orientacji na poziom.
+   Na iOS Safari: webkitEnterFullscreen — natywny odtwarzacz sam obraca kadr,
+   bo screen.orientation.lock() nie jest tam wspierane.
+   ------------------------------------------------------------------------ */
+function pelnyEkran(v){
+  if (!v) return;
+  try {
+    if (v.requestFullscreen)            v.requestFullscreen();
+    else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+    else if (v.webkitEnterFullscreen)   v.webkitEnterFullscreen();
+  } catch(e){}
+}
+function obrocDoPoziomu(){
+  var so = window.screen && screen.orientation;
+  if (!so) return;
+  var pelny = document.fullscreenElement || document.webkitFullscreenElement;
+  if (pelny){
+    if (so.lock) { try { so.lock("landscape").catch(function(){}); } catch(e){} }
+  } else if (so.unlock){
+    try { so.unlock(); } catch(e){}
+  }
+}
+document.addEventListener("fullscreenchange", obrocDoPoziomu);
+document.addEventListener("webkitfullscreenchange", obrocDoPoziomu);
+$("btn-fs").addEventListener("click", function(){ pelnyEkran(vid); });
+
 function pokazKartke(){
   try { vid.pause(); } catch(e){}
   endFrame.hidden = false;
   btnPlay.hidden = true;
   btnDoc.hidden = false;
+  $("btn-fs").hidden = true;
   btnSkip.style.visibility = "hidden";
-  hint.textContent = "Akta sprawy 1904 — otwórz teczkę";
+  hint.textContent = "Akta sprawy 1904";
   btnDoc.focus({ preventScroll:true });
   var app = $("app"); app.scrollLeft = 0; app.scrollTop = 0;
 }
@@ -1443,6 +1502,7 @@ function resetIntro(){
   endFrame.hidden = true;
   btnDoc.hidden = true;
   btnPlay.hidden = false;
+  $("btn-fs").hidden = true;
   btnSkip.style.visibility = "visible";
   hint.textContent = "Dotknij, żeby odtworzyć";
   try { vid.pause(); vid.currentTime = 0; } catch(e){}
@@ -1450,8 +1510,12 @@ function resetIntro(){
 btnPlay.addEventListener("click", function(){
   btnPlay.hidden = true;
   hint.textContent = "Sprawa 1904";
+  $("btn-fs").hidden = false;
   var p = vid.play();
-  if (p && p.catch) p.catch(function(){ btnPlay.hidden = false; hint.textContent = "Dotknij, żeby odtworzyć"; });
+  if (p && p.catch) p.catch(function(){
+    btnPlay.hidden = false; $("btn-fs").hidden = true;
+    hint.textContent = "Dotknij, żeby odtworzyć";
+  });
 });
 vid.addEventListener("ended", pokazKartke);
 btnSkip.addEventListener("click", pokazKartke);
